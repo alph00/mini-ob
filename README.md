@@ -1,3 +1,14 @@
+# 参考链接
+## 配环境
+https://www.oceanbase.com/docs/community-developer-quickstart-10000000000627365
+https://blog.csdn.net/qq_42604176/article/details/120803266
+## 介绍代码
+https://oceanbase-partner.github.io/lectures-on-dbms-implementation/miniob-introduction
+https://deepz.cc/2021/10/miniob-1/
+https://zhuanlan.zhihu.com/p/455956866?utm_medium=social&utm_oi=876027071804104704&utm_psn=1565451207262601216&utm_source=wechat_session
+https://zhuanlan.zhihu.com/p/445201899
+
+
 # 介绍
 miniob 是 OceanBase 与华中科技大学联合开发的、面向"零"基础同学的数据库入门实践工具。
 miniob 设计的目标是让同学们快速了解数据库并深入学习数据库内核，期望通过相关训练之后，能够对数据库内核各个模块的功能及其关联有所了解，并能够在
