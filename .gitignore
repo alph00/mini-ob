@@ -1,3 +1,11 @@
+src/observer/storage/default/observer.log.*
+src/observer/storage/default/miniob
+src/observer/storage/common/observer.log.*
+src/observer/sql/*/observer.log.*
+src/observer/sql/*/miniob/
+src/observer/observer.log.*
+src/observer/miniob/
+.cache/*
 ./deps/libevent
 ./deps/googletest
 ./deps/jsoncpp
