@@ -15,6 +15,8 @@ See the Mulan PSL v2 for more details. */
 #include "rc.h"
 #include "common/log/log.h"
 #include "common/lang/string.h"
+#include "sql/expr/expression.h"
+#include "sql/parser/parse_defs.h"
 #include "sql/stmt/filter_stmt.h"
 #include "storage/common/db.h"
 #include "storage/common/table.h"
@@ -28,8 +30,7 @@ FilterStmt::~FilterStmt()
 }
 
 RC FilterStmt::create(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-		      const Condition *conditions, int condition_num,
-		      FilterStmt *&stmt)
+    const Condition *conditions, int condition_num, FilterStmt *&stmt)
 {
   RC rc = RC::SUCCESS;
   stmt = nullptr;
@@ -51,7 +52,7 @@ RC FilterStmt::create(Db *db, Table *default_table, std::unordered_map<std::stri
 }
 
 RC get_table_and_field(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-		       const RelAttr &attr, Table *&table, const FieldMeta *&field)
+    const RelAttr &attr, Table *&table, const FieldMeta *&field)
 {
   if (common::is_blank(attr.relation_name)) {
     table = default_table;
@@ -79,10 +80,10 @@ RC get_table_and_field(Db *db, Table *default_table, std::unordered_map<std::str
 }
 
 RC FilterStmt::create_filter_unit(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-				  const Condition &condition, FilterUnit *&filter_unit)
+    const Condition &condition, FilterUnit *&filter_unit)
 {
   RC rc = RC::SUCCESS;
-  
+
   CompOp comp = condition.comp;
   if (comp < EQUAL_TO || comp >= NO_OP) {
     LOG_WARN("invalid compare operator : %d", comp);
@@ -94,7 +95,7 @@ RC FilterStmt::create_filter_unit(Db *db, Table *default_table, std::unordered_m
   if (condition.left_is_attr) {
     Table *table = nullptr;
     const FieldMeta *field = nullptr;
-    rc = get_table_and_field(db, default_table, tables, condition.left_attr, table, field);  
+    rc = get_table_and_field(db, default_table, tables, condition.left_attr, table, field);
     if (rc != RC::SUCCESS) {
       LOG_WARN("cannot find attr");
       return rc;
@@ -107,7 +108,7 @@ RC FilterStmt::create_filter_unit(Db *db, Table *default_table, std::unordered_m
   if (condition.right_is_attr) {
     Table *table = nullptr;
     const FieldMeta *field = nullptr;
-    rc = get_table_and_field(db, default_table, tables, condition.right_attr, table, field);  
+    rc = get_table_and_field(db, default_table, tables, condition.right_attr, table, field);
     if (rc != RC::SUCCESS) {
       LOG_WARN("cannot find attr");
       delete left;
@@ -118,6 +119,21 @@ RC FilterStmt::create_filter_unit(Db *db, Table *default_table, std::unordered_m
     right = new ValueExpr(condition.right_value);
   }
 
+  if (condition.left_is_attr && !condition.right_is_attr) {
+    if (((FieldExpr *)left)->field().attr_type() == DATES && condition.right_value.type != DATES) {
+      LOG_WARN("where DATE op !DATE");
+      delete left;
+      delete right;
+      return RC::INVALID_ARGUMENT;
+    }
+  } else if (!condition.left_is_attr && condition.right_is_attr) {
+    if (condition.left_value.type != DATES && ((FieldExpr *)right)->field().attr_type() == DATES) {
+      LOG_WARN("where !DATE op DATE");
+      delete left;
+      delete right;
+      return RC::INVALID_ARGUMENT;
+    }
+  }
   filter_unit = new FilterUnit;
   filter_unit->set_comp(comp);
   filter_unit->set_left(left);
