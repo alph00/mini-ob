@@ -634,6 +634,7 @@ RC BufferPoolManager::create_file(const char *file_name)
   return RC::SUCCESS;
 }
 
+
 RC BufferPoolManager::open_file(const char *_file_name, DiskBufferPool *& _bp)
 {
   std::string file_name(_file_name);
@@ -672,6 +673,13 @@ RC BufferPoolManager::close_file(const char *_file_name)
   DiskBufferPool *bp = iter->second;
   buffer_pools_.erase(iter);
   delete bp;
+  return RC::SUCCESS;
+}
+
+RC BufferPoolManager::remove_file(const char *_file_name)
+{
+  RC rc=close_file(_file_name);
+  int remove_ret=::remove(_file_name);
   return RC::SUCCESS;
 }
 

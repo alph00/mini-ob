@@ -47,6 +47,8 @@ public:
    */
   RC create(const char *path, const char *name, const char *base_dir, int attribute_count, const AttrInfo attributes[],
       CLogManager *clog_manager);
+  
+  RC drop(const char *path);
 
   /**
    * 打开一个表
