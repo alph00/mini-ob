@@ -156,12 +156,6 @@ RC Table::drop(const char* dir)
   }
   return RC::SUCCESS;
 
-  // //删索引
-  
-  // //删record handler
-  // rc = record_handler_->destroy();
-  // delete record_handler_;
-  // record_handler_=nullptr;
 
   // //删buffer pool
   // std::string data_file = table_data_file(base_dir, name);

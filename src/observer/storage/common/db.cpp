@@ -97,18 +97,6 @@ RC Db::drop_table(const char *table_name)
   opened_tables_.erase(it); // 删除成功的话，从表list中将它删除
   delete table;
   return RC::SUCCESS;
-  // RC rc = RC::SUCCESS;
-  // Table* table = find_table(name);
-  // if(table == nullptr){
-  //   return RC::SCHEMA_TABLE_NOT_EXIST;
-  // }
-
-  // std::string table_file_path = table_meta_file(path_.c_str(), name);
-  // rc=table->drop(table_file_path.c_str());
-  // if(rc != RC::SUCCESS) return rc;
-  // opened_tables_.erase(std::string(name));
-  // delete table;
-  // return rc;
 }
 Table *Db::find_table(const char *table_name) const
 {

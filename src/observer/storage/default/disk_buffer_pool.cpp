@@ -676,13 +676,6 @@ RC BufferPoolManager::close_file(const char *_file_name)
   return RC::SUCCESS;
 }
 
-RC BufferPoolManager::remove_file(const char *_file_name)
-{
-  RC rc=close_file(_file_name);
-  int remove_ret=::remove(_file_name);
-  return RC::SUCCESS;
-}
-
 RC BufferPoolManager::flush_page(Frame &frame)
 {
   int fd = frame.file_desc();
