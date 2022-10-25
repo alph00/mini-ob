@@ -634,6 +634,7 @@ RC BufferPoolManager::create_file(const char *file_name)
   return RC::SUCCESS;
 }
 
+
 RC BufferPoolManager::open_file(const char *_file_name, DiskBufferPool *& _bp)
 {
   std::string file_name(_file_name);
