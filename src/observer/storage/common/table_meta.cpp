@@ -113,7 +113,18 @@ const FieldMeta *TableMeta::trx_field() const
 {
   return &fields_[0];
 }
-
+int TableMeta::find_field_seq(const char *name)
+{
+  int index=1;
+  //for (const FieldMeta &field : fields_) {
+  for (int i=1;i<fields_.size();i++) {
+    if (0 == strcmp(fields_[i].name(), name)) {
+      return index;
+    }
+    index++;
+  }
+  return index;
+}
 const FieldMeta *TableMeta::field(int index) const
 {
   return &fields_[index];
@@ -123,6 +134,7 @@ const FieldMeta *TableMeta::field(const char *name) const
   if (nullptr == name) {
     return nullptr;
   }
+  
   for (const FieldMeta &field : fields_) {
     if (0 == strcmp(field.name(), name)) {
       return &field;

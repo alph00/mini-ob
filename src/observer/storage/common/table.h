@@ -49,7 +49,7 @@ public:
       CLogManager *clog_manager);
   
   RC drop(const char *path);
-
+  RC show_index_info(std::string& result);
   /**
    * 打开一个表
    * @param meta_file 保存表元数据的文件完整路径

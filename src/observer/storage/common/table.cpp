@@ -155,16 +155,6 @@ RC Table::drop(const char* dir)
       }
   }
   return RC::SUCCESS;
-
-
-  // //删buffer pool
-  // std::string data_file = table_data_file(base_dir, name);
-  // BufferPoolManager &bpm = BufferPoolManager::instance();
-  // rc = bpm.remove_file(data_file.c_str());
-  
-  // //删meta
-  // int remove_ret = ::remove(path);
-  // return rc;
 }
 RC Table::open(const char *meta_file, const char *base_dir, CLogManager *clog_manager)
 {
@@ -682,6 +672,22 @@ RC Table::create_index(Trx *trx, const char *index_name, const char *attribute_n
   LOG_INFO("Successfully added a new index (%s) on the table (%s)", index_name, name());
 
   return rc;
+}
+RC Table::show_index_info(std::string& result){
+  const int index_num = table_meta_.index_num();
+  for (int i = 0; i < index_num; i++){
+    const IndexMeta* index_meta = table_meta_.index(i);
+    const char* field=index_meta->field();
+    const char* index_name=index_meta->name();
+    //const FieldMeta* field_meta = table_meta_.field(field);
+    //Table | Non_unique |Key_name | Seq_in_index |Column_name
+    result.append(table_meta_.name()).append(" | ").append(index_num>0?"1":"0")\
+    .append(" | ").append(index_name).append(" | ")\
+    //.append(std::to_string(table_meta_.find_field_seq(field)))
+    .append("1")\
+    .append(" | ").append(field).append("\n");
+  }
+  return RC::SUCCESS;
 }
 
 RC Table::update_record(Trx *trx, const char *attribute_name, const Value *value, int condition_num,
