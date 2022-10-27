@@ -54,6 +54,11 @@ RC UpdateStmt::create(Db *db, const Updates &update_sql, Stmt *&stmt)
   char *field_name = update_sql.attribute_name;
   const TableMeta &table_meta = table->table_meta();
   const FieldMeta *field_meta = table_meta.field(field_name);
+  if (field_meta == nullptr) {
+    LOG_WARN("no such field. field=%s.%s.%s", db->name(), table->name(), field_name);
+    return RC::SCHEMA_FIELD_MISSING;
+  }
+
   const AttrType field_type = field_meta->type();
   const AttrType value_type = value->type;
   if (field_type != value_type) {
