@@ -683,7 +683,8 @@ RC Table::show_index_info(std::string& result){
     //Table | Non_unique |Key_name | Seq_in_index |Column_name
     result.append(table_meta_.name()).append(" | ").append(index_num>0?"1":"0")\
     .append(" | ").append(index_name).append(" | ")\
-    .append(std::to_string(table_meta_.find_field_seq(field)))\
+    //.append(std::to_string(table_meta_.find_field_seq(field)))
+    .append("1")\
     .append(" | ").append(field).append("\n");
   }
   return RC::SUCCESS;
