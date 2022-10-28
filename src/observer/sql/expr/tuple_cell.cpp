@@ -13,10 +13,13 @@ See the Mulan PSL v2 for more details. */
 //
 
 #include "sql/expr/tuple_cell.h"
+#include "sql/parser/parse_defs.h"
 #include "storage/common/field.h"
 #include "common/log/log.h"
 #include "util/comparator.h"
 #include "util/util.h"
+#include <cmath>
+#include <cstdlib>
 
 void TupleCell::to_string(std::ostream &os) const
 {
@@ -73,9 +76,21 @@ int TupleCell::compare(const TupleCell &other) const
   } else if (this->attr_type_ == INTS && other.attr_type_ == FLOATS) {
     float this_data = *(int *)data_;
     return compare_float(&this_data, other.data_);
+  } else if (this->attr_type_ == INTS && other.attr_type_ == CHARS) {  // to do qfs 不太确定要不要四舍五入？
+    int other_data_i = std::round(strtof(other.data_, nullptr));
+    return compare_int(this->data_, &other_data_i);
   } else if (this->attr_type_ == FLOATS && other.attr_type_ == INTS) {
     float other_data = *(int *)other.data_;
     return compare_float(data_, &other_data);
+  } else if (this->attr_type_ == FLOATS && other.attr_type_ == CHARS) {
+    float other_data_f = strtof(other.data_, nullptr);
+    return compare_float(this->data_, &other_data_f);
+  } else if (this->attr_type_ == CHARS && other.attr_type_ == INTS) {
+    int this_data_i = round(strtof(this->data_, nullptr));
+    return compare_int(&this_data_i, other.data_);
+  } else if (this->attr_type_ == CHARS && other.attr_type_ == FLOATS) {
+    float this_data_f = strtof(this->data_, nullptr);
+    return compare_float(&this_data_f, other.data_);
   }
   LOG_WARN("not supported");
   return -1;  // TODO return rc?
