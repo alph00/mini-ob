@@ -91,6 +91,8 @@ ParserContext *get_context(yyscan_t scanner)
         VALUES
         FROM
         WHERE
+        NOT
+        LIKE
         AND
         SET
         ON
@@ -103,7 +105,6 @@ ParserContext *get_context(yyscan_t scanner)
         LE
         GE
         NE
-        LIKE
 %union {
   struct _Attr *attr;
   struct _Condition *condition1;
@@ -428,7 +429,7 @@ condition:
 			relation_attr_init(&left_attr, NULL, $1);
 
 			Value *right_value = &CONTEXT->values[CONTEXT->value_length - 1];
-            if (CONTEXT->comp == LIKE_AS && right_value->type == CHARS) {
+            if ((CONTEXT->comp == LIKE_AS || CONTEXT->comp == NOT_LIKE) && right_value->type == CHARS) {
                 right_value->type = REGEXP;
             }
 
@@ -578,6 +579,8 @@ comOp:
     | LE { CONTEXT->comp = LESS_EQUAL; }
     | GE { CONTEXT->comp = GREAT_EQUAL; }
     | NE { CONTEXT->comp = NOT_EQUAL; }
+    | LIKE { CONTEXT->comp = LIKE_AS; }
+    | NOT LIKE { CONTEXT->comp = NOT_LIKE; }
     ;
 
 load_data:
