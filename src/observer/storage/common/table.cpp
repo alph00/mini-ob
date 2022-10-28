@@ -125,13 +125,17 @@ RC Table::drop(const char* dir)
 
   if(rc != RC::SUCCESS) return rc;
 
+  std::string data_file = table_data_file(dir, name());
+  BufferPoolManager &bpm = BufferPoolManager::instance();
+  rc = bpm.close_file(data_file.c_str());
+  if(rc != RC::SUCCESS) return rc;
+
   std::string path = table_meta_file(dir, name());
   if(unlink(path.c_str()) != 0) {
       LOG_ERROR("Failed to remove meta file=%s, errno=%d", path.c_str(), errno);
       return RC::GENERIC_ERROR;
   }
 
-  std::string data_file = table_data_file(dir, name());
   if(unlink(data_file.c_str()) != 0) { // 删除描述表元数据的文件
       LOG_ERROR("Failed to remove data file=%s, errno=%d", data_file.c_str(), errno);
       return RC::GENERIC_ERROR;
