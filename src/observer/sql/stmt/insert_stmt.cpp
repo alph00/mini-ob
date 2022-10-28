@@ -83,7 +83,7 @@ RC InsertStmt::create(Db *db, const Inserts &inserts, Stmt *&stmt)
         sprintf((char *)values[i].data, "%d", data_i);
       } else if (field_type == CHARS && value_type == FLOATS) {
         float data_f = *(float *)values[i].data;
-        sprintf((char *)values[i].data, "%f", data_f);
+        sprintf((char *)values[i].data, "%g", data_f);
       } else {
         LOG_WARN("other type cast!");
       }
