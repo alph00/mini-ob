@@ -30,14 +30,12 @@ typedef struct {
 } RelAttr;
 
 typedef enum {
-  EQUAL_TO,     //"="       0
-  LESS_EQUAL,   //"<="      1
-  NOT_EQUAL,    //"<>"      2
-  LESS_THAN,    //"<"       3
-  GREAT_EQUAL,  //">="      4
-  GREAT_THAN,   //">"       5
-  LIKE_AS,      //like      6
-  NOT_LIKE,     //not like  7
+  EQUAL_TO,     //"="     0
+  LESS_EQUAL,   //"<="    1
+  NOT_EQUAL,    //"<>"    2
+  LESS_THAN,    //"<"     3
+  GREAT_EQUAL,  //">="    4
+  GREAT_THAN,   //">"     5
   NO_OP
 } CompOp;
 
@@ -47,8 +45,7 @@ typedef enum {
   CHARS,
   INTS,
   DATES,  // qfs
-  FLOATS,
-  REGEXP,
+  FLOATS
 } AttrType;
 
 // 属性值
@@ -199,7 +196,6 @@ void relation_attr_destroy(RelAttr *relation_attr);
 void value_init_integer(Value *value, int v);
 void value_init_float(Value *value, float v);
 void value_init_string(Value *value, const char *v);
-int value_init_date(Value *value, const char *v);
 void value_destroy(Value *value);
 
 void condition_init(Condition *condition, CompOp comp, int left_is_attr, RelAttr *left_attr, Value *left_value,

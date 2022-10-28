@@ -95,12 +95,6 @@ bool PredicateOperator::do_predicate(RowTuple &tuple)
     case GREAT_THAN: {
       filter_result = (compare > 0);
     } break;
-    case LIKE_AS: {
-      filter_result = (compare == 0);
-    } break;
-    case NOT_LIKE: {
-      filter_result = (compare != 0);
-    } break;
     default: {
       LOG_WARN("invalid compare type: %d", comp);
     } break;

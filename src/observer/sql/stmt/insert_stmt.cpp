@@ -14,21 +14,19 @@ See the Mulan PSL v2 for more details. */
 
 #include "sql/stmt/insert_stmt.h"
 #include "common/log/log.h"
-#include "sql/parser/parse_defs.h"
 #include "storage/common/db.h"
 #include "storage/common/table.h"
-#include <cmath>
-#include <cstdlib>
 
 InsertStmt::InsertStmt(Table *table, const Value *values, int value_amount)
-    : table_(table), values_(values), value_amount_(value_amount)
+  : table_ (table), values_(values), value_amount_(value_amount)
 {}
 
 RC InsertStmt::create(Db *db, const Inserts &inserts, Stmt *&stmt)
 {
   const char *table_name = inserts.relation_name;
   if (nullptr == db || nullptr == table_name || inserts.value_num <= 0) {
-    LOG_WARN("invalid argument. db=%p, table_name=%p, value_num=%d", db, table_name, inserts.value_num);
+    LOG_WARN("invalid argument. db=%p, table_name=%p, value_num=%d", 
+             db, table_name, inserts.value_num);
     return RC::INVALID_ARGUMENT;
   }
 
@@ -55,38 +53,10 @@ RC InsertStmt::create(Db *db, const Inserts &inserts, Stmt *&stmt)
     const FieldMeta *field_meta = table_meta.field(i + sys_field_num);
     const AttrType field_type = field_meta->type();
     const AttrType value_type = values[i].type;
-    if (field_type != value_type) {  // TODO try to convert the value type to field type
-      if (field_type == DATES || value_type == DATES) {
-        LOG_WARN("field type mismatch. table=%s, field=%s, field type=%d, value_type=%d",
-            table_name,
-            field_meta->name(),
-            field_type,
-            value_type);
-        return RC::SCHEMA_FIELD_TYPE_MISMATCH;
-      } else if (field_type == INTS && value_type == FLOATS) {
-        float data_f = *(float *)values[i].data;
-        int data_i = std::round(data_f);
-        memcpy(values[i].data, &data_i, sizeof(data_i));
-        LOG_WARN("qfs data:%d", *(int *)values[i].data);
-      } else if (field_type == INTS && value_type == CHARS) {  // to do qfs 不太确定要不要四舍五入？
-        int data_i = round(strtof((char *)values[i].data, nullptr));
-        memcpy(values[i].data, &data_i, sizeof(data_i));
-      } else if (field_type == FLOATS && value_type == INTS) {
-        int data_i = *(int *)values[i].data;
-        float data_f = data_i * 1.0;
-        memcpy(values[i].data, &data_f, sizeof(data_f));
-      } else if (field_type == FLOATS && value_type == CHARS) {
-        float data_f = strtof((char *)values[i].data, nullptr);
-        memcpy(values[i].data, &data_f, sizeof(data_f));
-      } else if (field_type == CHARS && value_type == INTS) {
-        int data_i = *(int *)values[i].data;
-        sprintf((char *)values[i].data, "%d", data_i);
-      } else if (field_type == CHARS && value_type == FLOATS) {  // to do qfs 可能会有数太大用e表示的问题？
-        float data_f = *(float *)values[i].data;
-        sprintf((char *)values[i].data, "%g", data_f);
-      } else {
-        LOG_WARN("other type cast!");
-      }
+    if (field_type != value_type) { // TODO try to convert the value type to field type
+      LOG_WARN("field type mismatch. table=%s, field=%s, field type=%d, value_type=%d", 
+               table_name, field_meta->name(), field_type, value_type);
+      return RC::SCHEMA_FIELD_TYPE_MISMATCH;
     }
   }
 
