@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "util/util.h"
 #include <cmath>
 #include <cstdlib>
+#include <math.h>
 
 void TupleCell::to_string(std::ostream &os) const
 {
@@ -77,8 +78,13 @@ int TupleCell::compare(const TupleCell &other) const
     float this_data = *(int *)data_;
     return compare_float(&this_data, other.data_);
   } else if (this->attr_type_ == INTS && other.attr_type_ == CHARS) {  // to do qfs 不太确定要不要四舍五入？
-    int other_data_i = std::round(strtof(other.data_, nullptr));
-    return compare_int(this->data_, &other_data_i);
+    float other_data_f = strtof(other.data_, nullptr);
+    if (other_data_f - std::floor(other_data_f) < 1e-6) {
+      int other_data_i = (int)other_data_f;
+      return compare_int(this->data_, &other_data_i);
+    } else {
+      return compare_float(this->data_, &other_data_f);
+    }
   } else if (this->attr_type_ == FLOATS && other.attr_type_ == INTS) {
     float other_data = *(int *)other.data_;
     return compare_float(data_, &other_data);
@@ -86,8 +92,13 @@ int TupleCell::compare(const TupleCell &other) const
     float other_data_f = strtof(other.data_, nullptr);
     return compare_float(this->data_, &other_data_f);
   } else if (this->attr_type_ == CHARS && other.attr_type_ == INTS) {
-    int this_data_i = round(strtof(this->data_, nullptr));
-    return compare_int(&this_data_i, other.data_);
+    float this_data_f = strtof(this->data_, nullptr);
+    if (this_data_f - std::floor(this_data_f) < 1e-6) {
+      int this_data_i = (int)this_data_f;
+      return compare_int(&this_data_i, other.data_);
+    } else {
+      return compare_float(&this_data_f, other.data_);
+    }
   } else if (this->attr_type_ == CHARS && other.attr_type_ == FLOATS) {
     float this_data_f = strtof(this->data_, nullptr);
     return compare_float(&this_data_f, other.data_);

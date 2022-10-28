@@ -81,7 +81,7 @@ RC InsertStmt::create(Db *db, const Inserts &inserts, Stmt *&stmt)
       } else if (field_type == CHARS && value_type == INTS) {
         int data_i = *(int *)values[i].data;
         sprintf((char *)values[i].data, "%d", data_i);
-      } else if (field_type == CHARS && value_type == FLOATS) {
+      } else if (field_type == CHARS && value_type == FLOATS) {  // to do qfs 可能会有数太大用e表示的问题？
         float data_f = *(float *)values[i].data;
         sprintf((char *)values[i].data, "%g", data_f);
       } else {
