@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #include <string.h>
 #include <algorithm>
+#include <ctype.h>
 
 const double epsilon = 1E-6;
 
@@ -83,7 +84,7 @@ int compare_regexp(const char *text, const char * regexp)
     } else {
       return compare_regexp(text + 1, regexp + 1);
     }
-  } else if (*regexp == *text) {
+  } else if (*regexp == *text || tolower(*regexp) == tolower(*text)) {
     return compare_regexp(text + 1, regexp + 1);
   }
 
