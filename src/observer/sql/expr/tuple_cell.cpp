@@ -104,6 +104,10 @@ int TupleCell::compare(const TupleCell &other) const
   } else if (this->attr_type_ == CHARS && other.attr_type_ == FLOATS) {
     float this_data_f = strtof(this->data_, nullptr);
     return compare_float(&this_data_f, other.data_);
+  } else if (this->attr_type_ == CHARS && other.attr_type_ == REGEXP) {
+    const char *other_data = (const char *)other.data_;
+    const char *this_data  = (const char *)this->data_;
+    return compare_regexp(this_data, other_data);
   }
   LOG_WARN("not supported");
   return -1;  // TODO return rc?

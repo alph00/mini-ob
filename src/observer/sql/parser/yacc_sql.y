@@ -91,6 +91,8 @@ ParserContext *get_context(yyscan_t scanner)
         VALUES
         FROM
         WHERE
+        NOT
+        LIKE
         AND
         SET
         ON
@@ -103,7 +105,6 @@ ParserContext *get_context(yyscan_t scanner)
         LE
         GE
         NE
-
 %union {
   struct _Attr *attr;
   struct _Condition *condition1;
@@ -344,7 +345,7 @@ update:			/*  update 语句的语法解析树*/
 		{
 			CONTEXT->ssql->flag = SCF_UPDATE;//"update";
 			Value *value = &CONTEXT->values[0];
-			updates_init(&CONTEXT->ssql->sstr.update, $2, $4, value, 
+			updates_init(&CONTEXT->ssql->sstr.update, $2, $4, value,
 					CONTEXT->conditions, CONTEXT->condition_length);
 			CONTEXT->condition_length = 0;
 		}
@@ -428,6 +429,9 @@ condition:
 			relation_attr_init(&left_attr, NULL, $1);
 
 			Value *right_value = &CONTEXT->values[CONTEXT->value_length - 1];
+            if ((CONTEXT->comp == LIKE_AS || CONTEXT->comp == NOT_LIKE) && right_value->type == CHARS) {
+                right_value->type = REGEXP;
+            }
 
 			Condition condition;
 			condition_init(&condition, CONTEXT->comp, 1, &left_attr, NULL, 0, NULL, right_value);
@@ -575,6 +579,8 @@ comOp:
     | LE { CONTEXT->comp = LESS_EQUAL; }
     | GE { CONTEXT->comp = GREAT_EQUAL; }
     | NE { CONTEXT->comp = NOT_EQUAL; }
+    | LIKE { CONTEXT->comp = LIKE_AS; }
+    | NOT LIKE { CONTEXT->comp = NOT_LIKE; }
     ;
 
 load_data:

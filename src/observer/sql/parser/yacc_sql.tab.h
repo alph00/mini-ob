@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.5.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,6 +30,9 @@
 
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
+
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
 
 #ifndef YY_YY_YACC_SQL_TAB_H_INCLUDED
 # define YY_YY_YACC_SQL_TAB_H_INCLUDED
@@ -75,35 +79,36 @@ extern int yydebug;
     VALUES = 285,
     FROM = 286,
     WHERE = 287,
-    AND = 288,
-    SET = 289,
-    ON = 290,
-    LOAD = 291,
-    DATA = 292,
-    INFILE = 293,
-    EQ = 294,
-    LT = 295,
-    GT = 296,
-    LE = 297,
-    GE = 298,
-    NE = 299,
-    NUMBER = 300,
-    FLOAT = 301,
-    DATE_STR = 302,
-    ID = 303,
-    PATH = 304,
-    SSS = 305,
-    STAR = 306,
-    STRING_V = 307
+    NOT = 288,
+    LIKE = 289,
+    AND = 290,
+    SET = 291,
+    ON = 292,
+    LOAD = 293,
+    DATA = 294,
+    INFILE = 295,
+    EQ = 296,
+    LT = 297,
+    GT = 298,
+    LE = 299,
+    GE = 300,
+    NE = 301,
+    NUMBER = 302,
+    FLOAT = 303,
+    DATE_STR = 304,
+    ID = 305,
+    PATH = 306,
+    SSS = 307,
+    STAR = 308,
+    STRING_V = 309
   };
 #endif
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 107 "yacc_sql.y" /* yacc.c:1909  */
+#line 108 "yacc_sql.y"
 
   struct _Attr *attr;
   struct _Condition *condition1;
@@ -113,9 +118,9 @@ union YYSTYPE
   float floats;
 	char *position;
 
-#line 117 "yacc_sql.tab.h" /* yacc.c:1909  */
-};
+#line 122 "yacc_sql.tab.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

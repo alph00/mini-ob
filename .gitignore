@@ -7,9 +7,9 @@ src/observer/sql/*/miniob/
 src/observer/observer.log.*
 src/observer/miniob/
 .cache/*
-./deps/libevent
-./deps/googletest
-./deps/jsoncpp
+deps/libevent/*
+deps/googletest
+deps/jsoncpp
 build/*
 cmake-build-*/*
 .vscode/*
@@ -25,7 +25,8 @@ compile_commands.json
 GRTAGS
 GPATH
 GTAGS
-./miniob/*
-./src/observer/miniob/*
-./src/obclient/*log*
+miniob/
+src/observer/miniob
+src/obclient/*log*
+observer.log*
 #*#

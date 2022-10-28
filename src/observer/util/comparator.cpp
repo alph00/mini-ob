@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #include <string.h>
 #include <algorithm>
+#include <ctype.h>
 
 const double epsilon = 1E-6;
 
@@ -56,4 +57,36 @@ int compare_string(void *arg1, int arg1_max_length, void *arg2, int arg2_max_len
     return 0 - s2[maxlen];
   }
   return 0;
+}
+
+int compare_regexp(const char *text, const char * regexp);
+
+int regexp_match_percent(const char *text, const char *regexp)
+{
+  do {
+    if (compare_regexp(text, regexp + 1) == 0) {
+      return 0;
+    }
+  } while (*text != '\0' && *text != '\'' && text++);
+
+  return 1;
+}
+
+int compare_regexp(const char *text, const char * regexp)
+{
+  if (*regexp == '\0' && *text == '\0') {
+    return 0;
+  } else if (*regexp == '%') {
+    return regexp_match_percent(text, regexp);
+  } else if (*regexp == '_') {
+    if (*text == '\0' || *text == '\'') {
+      return 1;
+    } else {
+      return compare_regexp(text + 1, regexp + 1);
+    }
+  } else if (*regexp == *text || tolower(*regexp) == tolower(*text)) {
+    return compare_regexp(text + 1, regexp + 1);
+  }
+
+  return 1;
 }
