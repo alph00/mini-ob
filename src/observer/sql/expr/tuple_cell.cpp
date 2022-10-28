@@ -83,7 +83,8 @@ int TupleCell::compare(const TupleCell &other) const
       int other_data_i = (int)other_data_f;
       return compare_int(this->data_, &other_data_i);
     } else {
-      return compare_float(this->data_, &other_data_f);
+      float this_data_f = (float)(*(int *)this->data_);
+      return compare_float(&this_data_f, &other_data_f);
     }
   } else if (this->attr_type_ == FLOATS && other.attr_type_ == INTS) {
     float other_data = *(int *)other.data_;
@@ -97,7 +98,8 @@ int TupleCell::compare(const TupleCell &other) const
       int this_data_i = (int)this_data_f;
       return compare_int(&this_data_i, other.data_);
     } else {
-      return compare_float(&this_data_f, other.data_);
+      float other_data_f = (float)(*(int *)other.data_);
+      return compare_float(&this_data_f, &other_data_f);
     }
   } else if (this->attr_type_ == CHARS && other.attr_type_ == FLOATS) {
     float this_data_f = strtof(this->data_, nullptr);
