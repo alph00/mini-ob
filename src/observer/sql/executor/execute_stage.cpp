@@ -586,6 +586,7 @@ RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
   Db *db = session->get_current_db();
   Trx *trx = session->current_trx();
   CLogManager *clog_manager = db->get_clog_manager();
+  RC rc = RC::SUCCESS;
 
   if (stmt == nullptr) {
     LOG_WARN("cannot find statement");
@@ -595,7 +596,7 @@ RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
   InsertStmt *insert_stmt = (InsertStmt *)stmt;
   Table *table = insert_stmt->table();
 
-  RC rc = table->insert_record(trx, insert_stmt->value_amount(), insert_stmt->values());
+  rc = table->insert_record(trx, insert_stmt->values_num(), insert_stmt->values_array(), insert_stmt->value_nums());
   if (rc == RC::SUCCESS) {
     if (!session->is_trx_multi_operation_mode()) {
       CLogRecord *clog_record = nullptr;
@@ -619,6 +620,7 @@ RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
   } else {
     session_event->set_response("FAILURE\n");
   }
+
   return rc;
 }
 

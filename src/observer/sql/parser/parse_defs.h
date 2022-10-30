@@ -22,6 +22,7 @@ See the Mulan PSL v2 for more details. */
 #define MAX_ATTR_NAME 20
 #define MAX_ERROR_MESSAGE 20
 #define MAX_DATA 50
+#define MAX_RECORD_NUM 20
 
 // 属性结构体
 typedef struct {
@@ -57,6 +58,9 @@ typedef struct _Value {
   void *data;     // value
 } Value;
 
+// array of value
+typedef Value Values[MAX_RECORD_NUM];
+
 typedef struct _Condition {
   int left_is_attr;    // TRUE if left-hand side is an attribute
                        // 1时，操作符左边是属性名，0时，是属性值
@@ -82,8 +86,9 @@ typedef struct {
 // struct of insert
 typedef struct {
   char *relation_name;    // Relation to insert into
-  size_t value_num;       // Length of values
-  Value values[MAX_NUM];  // values to insert
+  size_t values_num;           // Length of [(xx,xx), (xx,xx), (xx,xx)]
+  size_t value_nums[MAX_RECORD_NUM];  // Length of every (xx,xx,xx)
+  Values values_array[MAX_RECORD_NUM];  // [(xx,xx), (xx,xx)] to insert
 } Inserts;
 
 // struct of delete
@@ -215,7 +220,7 @@ void selects_append_relation(Selects *selects, const char *relation_name);
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num);
 void selects_destroy(Selects *selects);
 
-void inserts_init(Inserts *inserts, const char *relation_name, Value values[], size_t value_num);
+void inserts_init(Inserts *inserts, const char *relation_name, Values values_array[], size_t value_num_array[], size_t values_num);
 void inserts_destroy(Inserts *inserts);
 
 void deletes_init_relation(Deletes *deletes, const char *relation_name);
