@@ -596,31 +596,29 @@ RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
   InsertStmt *insert_stmt = (InsertStmt *)stmt;
   Table *table = insert_stmt->table();
 
-  for (size_t i = 0; i < insert_stmt->values_num(); i++) {
-    rc = table->insert_record(trx, insert_stmt->value_amount(i), insert_stmt->values(i));
-    if (rc == RC::SUCCESS) {
-      if (!session->is_trx_multi_operation_mode()) {
-        CLogRecord *clog_record = nullptr;
-        rc = clog_manager->clog_gen_record(CLogType::REDO_MTR_COMMIT, trx->get_current_id(), clog_record);
-        if (rc != RC::SUCCESS || clog_record == nullptr) {
-          session_event->set_response("FAILURE\n");
-          return rc;
-        }
-
-        rc = clog_manager->clog_append_record(clog_record);
-        if (rc != RC::SUCCESS) {
-          session_event->set_response("FAILURE\n");
-          return rc;
-        }
-
-        trx->next_current_id();
-        session_event->set_response("SUCCESS\n");
-      } else {
-        session_event->set_response("SUCCESS\n");
+  rc = table->insert_record(trx, insert_stmt->values_num(), insert_stmt->values_array(), insert_stmt->value_nums());
+  if (rc == RC::SUCCESS) {
+    if (!session->is_trx_multi_operation_mode()) {
+      CLogRecord *clog_record = nullptr;
+      rc = clog_manager->clog_gen_record(CLogType::REDO_MTR_COMMIT, trx->get_current_id(), clog_record);
+      if (rc != RC::SUCCESS || clog_record == nullptr) {
+        session_event->set_response("FAILURE\n");
+        return rc;
       }
+
+      rc = clog_manager->clog_append_record(clog_record);
+      if (rc != RC::SUCCESS) {
+        session_event->set_response("FAILURE\n");
+        return rc;
+      }
+
+      trx->next_current_id();
+      session_event->set_response("SUCCESS\n");
     } else {
-      session_event->set_response("FAILURE\n");
+      session_event->set_response("SUCCESS\n");
     }
+  } else {
+    session_event->set_response("FAILURE\n");
   }
 
   return rc;

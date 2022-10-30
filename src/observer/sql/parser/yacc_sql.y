@@ -303,7 +303,7 @@ insert:				/*insert   语句的语法解析树*/
 			// for(i = 0; i < CONTEXT->value_length; i++){
 			// 	CONTEXT->ssql->sstr.insertion.values[i] = CONTEXT->values[i];
       // }
-			inserts_init(&CONTEXT->ssql->sstr.insertion, $3, CONTEXT->values, CONTEXT->value_length_array, CONTEXT->values_length);
+			inserts_init(&CONTEXT->ssql->sstr.insertion, $3, CONTEXT->values_array, CONTEXT->value_length_array, CONTEXT->values_length);
 
       //临时变量清零
       CONTEXT->value_length=0;

@@ -36,7 +36,9 @@ public:
 public:
   Table *table() const {return table_;}
   const Value *values(size_t idx) const;
+  const Values *values_array() const { return values_; }
   size_t values_num() const { return values_num_; }
+  const size_t *value_nums() const { return value_nums_; }
   size_t value_amount(size_t idx) const;
 
 private:
