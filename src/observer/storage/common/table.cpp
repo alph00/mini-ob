@@ -131,12 +131,16 @@ RC Table::drop(const char *dir)
     LOG_ERROR("Failed to remove meta file=%s, errno=%d", path.c_str(), errno);
     return RC::GENERIC_ERROR;
   }
+  // delete buffer pool from buffer pool manager
+  // assume one buffer pool is only used by one table, or buffer pool manager can't find buffer pool for another table
+  BufferPoolManager::instance().close_file(path.c_str());
 
   std::string data_file = table_data_file(dir, name());
   if (unlink(data_file.c_str()) != 0) {  // 删除描述表元数据的文件
     LOG_ERROR("Failed to remove data file=%s, errno=%d", data_file.c_str(), errno);
     return RC::GENERIC_ERROR;
   }
+  BufferPoolManager::instance().close_file(data_file.c_str());
 
   // 删除表实现text字段的数据文件（后续实现了text case时需要考虑，最开始可以不考虑这个逻辑）
   // std::string text_data_file = std::string(dir) + "/" + name() + TABLE_TEXT_DATA_SUFFIX;
@@ -154,6 +158,7 @@ RC Table::drop(const char *dir)
       LOG_ERROR("Failed to remove index file=%s, errno=%d", index_file.c_str(), errno);
       return RC::GENERIC_ERROR;
     }
+    BufferPoolManager::instance().close_file(index_file.c_str());
   }
   return RC::SUCCESS;
 }
