@@ -356,6 +356,8 @@ RC RecordFileHandler::init_free_pages()
   return rc;
 }
 
+// read page to be inserted from buffer pool
+// add record to it and mark it as dirty
 RC RecordFileHandler::insert_record(const char *data, int record_size, RID *rid)
 {
   RC ret = RC::SUCCESS;

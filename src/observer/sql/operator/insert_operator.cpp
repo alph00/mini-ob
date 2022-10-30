@@ -20,8 +20,8 @@ See the Mulan PSL v2 for more details. */
 RC InsertOperator::open()
 {
   Table *table = insert_stmt_->table();
-  const Value *values = insert_stmt_->values();
-  int value_amount = insert_stmt_->value_amount();
+  const Value *values = insert_stmt_->values(0);
+  int value_amount = insert_stmt_->value_amount(0);
   return table->insert_record(nullptr, value_amount, values); // TODO trx
 }
 
