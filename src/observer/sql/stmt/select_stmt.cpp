@@ -130,6 +130,10 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
     const Aggrefunc &func = select_sql.aggrefuncs[i];
     if (func.num >= 0 ||
         ((common::is_blank(func.attribute.relation_name)) && 0 == strcmp(func.attribute.attribute_name, "*"))) {
+      if (func.type != COUNTS) {
+        LOG_WARN("invalid aggregation sytax!");
+        return RC::SQL_SYNTAX;
+      }
       for (auto table : tables) {
         query_fields.push_back(Field(table, nullptr, true, func));
       }
@@ -140,6 +144,10 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
         if (0 != strcmp(field_name, "*")) {
           LOG_WARN("invalid field name while table is *. attr=%s", field_name);
           return RC::SCHEMA_FIELD_MISSING;
+        }
+        if (func.type != COUNTS) {
+          LOG_WARN("invalid aggregation sytax!");
+          return RC::SQL_SYNTAX;
         }
         for (auto table : tables) {
           query_fields.push_back(Field(table, nullptr, true, func));
