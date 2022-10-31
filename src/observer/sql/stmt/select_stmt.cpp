@@ -126,7 +126,7 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
     }
   }
 
-  for (int i = select_sql.aggrefunc_num - 1; i >= 0; i--) {
+  for (int i = 0; i < select_sql.aggrefunc_num; ++i) {
     const Aggrefunc &func = select_sql.aggrefuncs[i];
     if (func.num >= 0 ||
         ((common::is_blank(func.attribute.relation_name)) && 0 == strcmp(func.attribute.attribute_name, "*"))) {
