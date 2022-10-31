@@ -39,6 +39,11 @@ QUOTE            [\'\"]
 [\-]?{DIGIT}+{DOT}{DIGIT}+                           yylval->floats=(float)(atof(yytext)); RETURN_TOKEN(FLOAT);
 {QUOTE}[0-9]{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01]){QUOTE}                  yylval->string=strdup(yytext); RETURN_TOKEN(DATE_STR);  
 
+[Cc][Oo][Uu][Nn][Tt]                                 RETURN_TOKEN(COUNT_F);
+[Aa][Vv][Gg]                                         RETURN_TOKEN(AVG_F);
+[Mm][Aa][Xx]                                         RETURN_TOKEN(MAX_F);
+[Mm][Ii][Nn]                                         RETURN_TOKEN(MIN_F);
+[Ss][Uu][Mm]                                         RETURN_TOKEN(SUM_F);
 ";"                                                  RETURN_TOKEN(SEMICOLON);
 {DOT}                                                RETURN_TOKEN(DOT);
 "*"                                                  RETURN_TOKEN(STAR);

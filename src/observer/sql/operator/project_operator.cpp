@@ -16,6 +16,9 @@ See the Mulan PSL v2 for more details. */
 #include "sql/operator/project_operator.h"
 #include "storage/record/record.h"
 #include "storage/common/table.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 RC ProjectOperator::open()
 {
@@ -50,12 +53,49 @@ Tuple *ProjectOperator::current_tuple()
   return &tuple_;
 }
 
-void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_meta)
+void ProjectOperator::add_projection(
+    const Table *table, const FieldMeta *field_meta, const bool isAggrefunc, const Aggrefunc *func)
 {
   // 对单表来说，展示的(alias) 字段总是字段名称，
   // 对多表查询来说，展示的alias 需要带表名字
   TupleCellSpec *spec = new TupleCellSpec(new FieldExpr(table, field_meta));
-  spec->set_alias(field_meta->name());
+  if (isAggrefunc) {
+    char *header = (char *)malloc(MAX_ATTR_NAME + 10);
+    switch (func->type) {
+      case COUNTS: {
+        strcpy(header, "count(");
+      } break;
+      case AVGS: {
+        strcpy(header, "avg(");
+      } break;
+      case SUMS: {
+        strcpy(header, "sum(");
+      } break;
+      case MAXS: {
+        strcpy(header, "max(");
+      } break;
+      case MINS: {
+        strcpy(header, "min(");
+      } break;
+      default: {
+      }
+    }
+    if (field_meta == nullptr) {
+      if (func->num >= 0) {
+        char num[10];
+        sprintf(num, "%d", func->num);
+        strcat(header, num);
+      } else {
+        strcat(header, "*");
+      }
+    } else {
+      strcat(header, field_meta->name());
+    }
+    strcat(header, ")");
+    spec->set_alias(header);
+  } else {
+    spec->set_alias(field_meta->name());
+  }
   tuple_.add_cell_spec(spec);
 }
 
@@ -63,3 +103,21 @@ RC ProjectOperator::tuple_cell_spec_at(int index, const TupleCellSpec *&spec) co
 {
   return tuple_.cell_spec_at(index, spec);
 }
+// RC aggrefunc(ProjectOperator &Operator, SelectStmt &stmt)
+// {
+//   RC rc = RC::SUCCESS;
+//   std::stringstream ss;
+//   print_tuple_header(ss, Operator);
+//   while ((rc = Operator.next()) == RC::SUCCESS) {
+//     Tuple *tuple = Operator.current_tuple();
+//     if (nullptr == tuple) {
+//       rc = RC::INTERNAL;
+//       LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+//       break;
+//     }
+//   }
+//   switch (tup) {}
+//   tuple_to_string(ss, *tuple);
+//   ss << std::endl;
+//   return rc;
+// }

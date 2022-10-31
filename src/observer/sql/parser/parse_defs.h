@@ -48,6 +48,15 @@ typedef enum {
   FLOATS
 } AttrType;
 
+// 聚合函数类型
+typedef enum {
+  COUNTS,  // 0
+  MAXS,    // 1
+  MINS,    // 2
+  SUMS,    // 3
+  AVGS     // 4
+} AggrefuncType;
+
 // 属性值
 typedef struct _Value {
   AttrType type;  // type of value
@@ -66,6 +75,16 @@ typedef struct _Condition {
   Value right_value;   // right-hand side value if right_is_attr = FALSE
 } Condition;
 
+// 聚合函数
+typedef struct _Aggrefunc {
+  AggrefuncType type;  // type of Aggregation function
+  // size_t attr_num;     // Length of attrs in Aggregation function
+  // RelAttr attributes[MAX_NUM];  // attrs in Aggregation function
+  // size_t allfields;   // whether to select all fields
+  RelAttr attribute;  // attr in Aggregation function
+  int num;            // num in Aggregation function
+} Aggrefunc;
+
 // struct of select
 typedef struct {
   size_t attr_num;                // Length of attrs in Select clause
@@ -74,6 +93,8 @@ typedef struct {
   char *relations[MAX_NUM];       // relations in From clause
   size_t condition_num;           // Length of conditions in Where clause
   Condition conditions[MAX_NUM];  // conditions in Where clause
+  size_t aggrefunc_num;           // Length of aggregation functions in Select clause
+  Aggrefunc aggrefuncs[MAX_NUM];  // aggregation functions in Select clause
 } Selects;
 
 // struct of insert
@@ -134,7 +155,7 @@ typedef struct {
 } DescTable;
 
 typedef struct {
-  const char *relation_name;  
+  const char *relation_name;
 } ShowIndex;
 
 typedef struct {
@@ -193,6 +214,9 @@ extern "C" {
 void relation_attr_init(RelAttr *relation_attr, const char *relation_name, const char *attribute_name);
 void relation_attr_destroy(RelAttr *relation_attr);
 
+void aggrefunc_init(Aggrefunc *func, AggrefuncType type, const char *relation_num, const char *attribute_name, int num);
+void aggrefunc_destroy(Aggrefunc *func);
+
 void value_init_integer(Value *value, int v);
 void value_init_float(Value *value, float v);
 void value_init_string(Value *value, const char *v);
@@ -210,6 +234,7 @@ void selects_init(Selects *selects, ...);
 void selects_append_attribute(Selects *selects, RelAttr *rel_attr);
 void selects_append_relation(Selects *selects, const char *relation_name);
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num);
+void selects_append_aggrefuncs(Selects *selects, Aggrefunc *func);
 void selects_destroy(Selects *selects);
 
 void inserts_init(Inserts *inserts, const char *relation_name, Value values[], size_t value_num);

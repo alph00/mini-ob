@@ -12,6 +12,11 @@ See the Mulan PSL v2 for more details. */
 // Created by Meiyi & Longda on 2021/4/13.
 //
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
 #include <string>
 #include <sstream>
 
@@ -33,6 +38,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/operator/delete_operator.h"
 #include "sql/operator/project_operator.h"
 #include "sql/operator/update_operator.h"
+#include "sql/parser/parse_defs.h"
 #include "sql/stmt/stmt.h"
 #include "sql/stmt/select_stmt.h"
 #include "sql/stmt/update_stmt.h"
@@ -46,6 +52,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/common/condition_filter.h"
 #include "storage/trx/trx.h"
 #include "storage/clog/clog.h"
+#include "util/util.h"
 
 using namespace common;
 
@@ -408,6 +415,240 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt)
   LOG_INFO("use index for scan: %s in table %s", index->index_meta().name(), table->name());
   return oper;
 }
+void print_Aggrefunc_header(std::ostream &os, const ProjectOperator &oper, size_t num)
+{
+  const TupleCellSpec *cell_spec = nullptr;
+  for (size_t i = 0; i < num; i++) {
+    oper.tuple_cell_spec_at(i, cell_spec);
+    if (i != 0) {
+      os << " | ";
+    }
+
+    if (cell_spec->alias()) {
+      os << cell_spec->alias();
+    }
+  }
+
+  if (num > 0) {
+    os << '\n';
+  }
+}
+void AggrefuncPrint(std::ostream &os, const std::vector<Field> &query_fields, AggrefuncPara *para)
+{
+  bool first_field = true;
+  for (size_t i = 0; i < query_fields.size(); ++i) {
+    if (!first_field) {
+      os << " | ";
+    } else {
+      first_field = false;
+    }
+    switch (query_fields[i].aggrefunc()->type) {
+      case COUNTS: {
+        os << para[i].count;
+      } break;
+      case AVGS: {
+        switch (query_fields[i].attr_type()) {
+          case CHARS:
+          case FLOATS:
+          case INTS: {
+            os << double2string(para[i].sum / para[i].count);
+          } break;
+          default: {
+
+          } break;
+        }
+      } break;
+      case MAXS: {
+        switch (query_fields[i].attr_type()) {
+          case INTS: {
+            os << para[i].max_i;
+          } break;
+          case FLOATS: {
+            os << double2string(para[i].max_f);
+          } break;
+          case CHARS: {  // to do qfs ?
+            os << para[i].max_c;
+          } break;
+          case DATES: {
+            int value = para[i].max_i;
+            char buf[16] = {0};
+            snprintf(buf,
+                sizeof(buf),
+                "%04d-%02d-%02d",
+                value / 10000,
+                (value % 10000) / 100,
+                value % 100);  // 注意这里月份和天数，不足两位时需要填充0
+            buf[10] = '\0';
+            os << buf;
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+      case MINS: {
+        switch (query_fields[i].attr_type()) {
+          case INTS: {
+            os << para[i].min_i;
+          } break;
+          case FLOATS: {
+            os << double2string(para[i].min_f);
+          } break;
+          case CHARS: {  // to do qfs ?
+            // for (int j = 0;; j++) {
+            //   os << para[i].min_c[j];
+            //   if (para[i].max_c[j] == '\0') {
+            //     break;
+            //   }
+            // }
+            os << para[i].min_c;
+          } break;
+          case DATES: {
+            int value = para[i].min_i;
+            char buf[16] = {0};
+            snprintf(buf,
+                sizeof(buf),
+                "%04d-%02d-%02d",
+                value / 10000,
+                (value % 10000) / 100,
+                value % 100);  // 注意这里月份和天数，不足两位时需要填充0
+            buf[10] = '\0';
+            os << buf;
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+      case SUMS: {
+        switch (query_fields[i].attr_type()) {
+          case FLOATS: {
+            os << double2string(para[i].sum);
+          } break;
+          case CHARS: {  //?
+            os << double2string(para[i].sum);
+          } break;
+          case INTS: {
+            os << (int)para[i].sum;
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+      default: {
+      } break;
+    }
+  }
+  os << std::endl;
+}
+
+RC processAggrefunc(const std::vector<Field> &query_fields, AggrefuncPara *para, Tuple *tuple)
+{
+  RC rc = RC::SUCCESS;
+  for (size_t i = 0; i < query_fields.size(); ++i) {
+    const Aggrefunc *func = query_fields[i].aggrefunc();
+    switch (func->type) {
+      case COUNTS: {
+        if (query_fields[i].meta() == nullptr) {
+          if (func->num >= 0) {  // count(1)
+            para[i].count += func->num;
+          } else {  // count(*)
+            para[i].count += 1;
+          }
+        } else {
+          // 目前不考虑NULL
+          para[i].count += 1;
+        }
+      } break;
+      case AVGS: {
+        TupleCell cell;
+        rc = tuple->cell_at(i, cell);
+        para[i].count += 1;
+        const char *data = cell.data();
+        switch (cell.attr_type()) {
+          case FLOATS: {
+            para[i].sum += *(float *)data;
+          } break;
+          case INTS:
+          case DATES: {
+            para[i].sum += *(int *)data;
+          } break;
+          case CHARS: {
+            char *data_c = strdup(data);
+            float data_f = strtof(data_c, nullptr);
+            para[i].sum += data_f;
+            free(data_c);
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+      case MAXS: {
+        TupleCell cell;
+        rc = tuple->cell_at(i, cell);
+        const char *data = cell.data();
+        switch (cell.attr_type()) {
+          case FLOATS: {
+            para[i].max_f = std::max(para[i].max_f, *(float *)data);
+          }
+          case INTS:
+          case DATES: {
+            para[i].max_i = std::max(para[i].max_i, *(int *)data);
+          } break;
+          case CHARS: {
+            if (strcmp(para[i].max_c, data) < 0) {
+              strcpy(para[i].max_c, data);
+            }
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+      case MINS: {
+        TupleCell cell;
+        rc = tuple->cell_at(i, cell);
+        const char *data = cell.data();
+        switch (cell.attr_type()) {
+          case FLOATS: {
+            para[i].min_f = std::min(para[i].min_f, *(float *)data);
+          }
+          case INTS:
+          case DATES: {
+            para[i].min_i = std::min(para[i].min_i, *(int *)data);
+          } break;
+          case CHARS: {
+            if (strcmp(para[i].min_c, data) > 0) {
+              strcpy(para[i].min_c, data);
+            }
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+      case SUMS: {
+        TupleCell cell;
+        rc = tuple->cell_at(i, cell);
+        const char *data = cell.data();
+        switch (cell.attr_type()) {
+          case FLOATS: {
+            para[i].sum += *(float *)data;
+          } break;
+          case INTS:
+          case DATES: {
+            para[i].sum += *(int *)data;
+          } break;
+          case CHARS: {
+            char *data_c = strdup(data);
+            float data_f = strtof(data_c, nullptr);
+            para[i].sum += data_f;
+            free(data_c);
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+    }
+  }
+  return rc;
+}
 
 RC ExecuteStage::do_select(SQLStageEvent *sql_event)
 {
@@ -432,7 +673,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   ProjectOperator project_oper;
   project_oper.add_child(&pred_oper);
   for (const Field &field : select_stmt->query_fields()) {
-    project_oper.add_projection(field.table(), field.meta());
+    project_oper.add_projection(field.table(), field.meta(), field.isAggrefunc(), field.aggrefunc());
   }
   rc = project_oper.open();
   if (rc != RC::SUCCESS) {
@@ -440,20 +681,37 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     return rc;
   }
 
+  // 目前暂时先这样，普通查询和聚合函数不能同时存在，之后会不会有？
+  // 先不考虑sum(2)这种
   std::stringstream ss;
-  print_tuple_header(ss, project_oper);
-  while ((rc = project_oper.next()) == RC::SUCCESS) {
-    // get current record
-    // write to response
-    Tuple *tuple = project_oper.current_tuple();
-    if (nullptr == tuple) {
-      rc = RC::INTERNAL;
-      LOG_WARN("failed to get current record. rc=%s", strrc(rc));
-      break;
+  if (select_stmt->query_fields()[0].isAggrefunc() == true) {
+    print_Aggrefunc_header(ss, project_oper, select_stmt->query_fields().size());
+    AggrefuncPara para[select_stmt->query_fields().size()];
+    while ((rc = project_oper.next()) == RC::SUCCESS) {
+      Tuple *tuple = project_oper.current_tuple();
+      if (nullptr == tuple) {
+        rc = RC::INTERNAL;
+        LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+        break;
+      }
+      processAggrefunc(select_stmt->query_fields(), para, tuple);
     }
+    AggrefuncPrint(ss, select_stmt->query_fields(), para);
+  } else {
+    print_tuple_header(ss, project_oper);
+    while ((rc = project_oper.next()) == RC::SUCCESS) {
+      // get current record
+      // write to response
+      Tuple *tuple = project_oper.current_tuple();
+      if (nullptr == tuple) {
+        rc = RC::INTERNAL;
+        LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+        break;
+      }
 
-    tuple_to_string(ss, *tuple);
-    ss << std::endl;
+      tuple_to_string(ss, *tuple);
+      ss << std::endl;
+    }
   }
 
   if (rc != RC::RECORD_EOF) {
