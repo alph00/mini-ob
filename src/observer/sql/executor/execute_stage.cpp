@@ -16,7 +16,6 @@ See the Mulan PSL v2 for more details. */
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <string>
 #include <sstream>
 
@@ -493,13 +492,7 @@ void AggrefuncPrint(std::ostream &os, const std::vector<Field> &query_fields, Ag
           case FLOATS: {
             os << double2string(para[i].min_f);
           } break;
-          case CHARS: {  // to do qfs ?
-            // for (int j = 0;; j++) {
-            //   os << para[i].min_c[j];
-            //   if (para[i].max_c[j] == '\0') {
-            //     break;
-            //   }
-            // }
+          case CHARS: {
             os << para[i].min_c;
           } break;
           case DATES: {
@@ -681,7 +674,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     return rc;
   }
 
-  // 目前暂时先这样，普通查询和聚合函数不能同时存在，之后会不会有？
+  // 目前认为普通查询和聚合函数不能同时存在
   // 先不考虑sum(2)这种
   std::stringstream ss;
   if (select_stmt->query_fields()[0].isAggrefunc() == true) {

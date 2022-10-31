@@ -103,21 +103,3 @@ RC ProjectOperator::tuple_cell_spec_at(int index, const TupleCellSpec *&spec) co
 {
   return tuple_.cell_spec_at(index, spec);
 }
-// RC aggrefunc(ProjectOperator &Operator, SelectStmt &stmt)
-// {
-//   RC rc = RC::SUCCESS;
-//   std::stringstream ss;
-//   print_tuple_header(ss, Operator);
-//   while ((rc = Operator.next()) == RC::SUCCESS) {
-//     Tuple *tuple = Operator.current_tuple();
-//     if (nullptr == tuple) {
-//       rc = RC::INTERNAL;
-//       LOG_WARN("failed to get current record. rc=%s", strrc(rc));
-//       break;
-//     }
-//   }
-//   switch (tup) {}
-//   tuple_to_string(ss, *tuple);
-//   ss << std::endl;
-//   return rc;
-// }

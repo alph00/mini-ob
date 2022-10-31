@@ -126,11 +126,11 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
     }
   }
 
-  for (int i = 0; i < select_sql.aggrefunc_num; ++i) {
+  for (size_t i = 0; i < select_sql.aggrefunc_num; ++i) {
     const Aggrefunc &func = select_sql.aggrefuncs[i];
     if (func.num >= 0 ||
         ((common::is_blank(func.attribute.relation_name)) && 0 == strcmp(func.attribute.attribute_name, "*"))) {
-      if (func.type != COUNTS) {
+      if (func.type != COUNTS) {  // 不允许出现avg(*)
         LOG_WARN("invalid aggregation sytax!");
         return RC::SQL_SYNTAX;
       }
@@ -145,7 +145,7 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
           LOG_WARN("invalid field name while table is *. attr=%s", field_name);
           return RC::SCHEMA_FIELD_MISSING;
         }
-        if (func.type != COUNTS) {
+        if (func.type != COUNTS) {  // 不允许出现avg(*.*)
           LOG_WARN("invalid aggregation sytax!");
           return RC::SQL_SYNTAX;
         }
