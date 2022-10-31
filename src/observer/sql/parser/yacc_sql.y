@@ -108,6 +108,12 @@ ParserContext *get_context(yyscan_t scanner)
         LE
         GE
         NE
+		COUNT_F
+		AVG_F
+		MAX_F
+		MIN_F
+		SUM_F
+
 %union {
   struct _Attr *attr;
   struct _Condition *condition1;
@@ -129,6 +135,7 @@ ParserContext *get_context(yyscan_t scanner)
 //非终结符
 
 %type <number> type;
+%type <number> aggrefunc_type;
 %type <condition1> condition;
 %type <value1> value;
 %type <number> number;
@@ -403,7 +410,45 @@ select_attr:
 			relation_attr_init(&attr, $1, $3);
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
+	| aggrefunc  aggrefunc_list {
+		}
     ;
+aggrefunc_list:
+	/* empty */
+	| COMMA aggrefunc aggrefunc_list {
+		}
+	;
+/* 目前不支持多变量聚合函数 */
+/* 目前不支持聚合函数与普通field并存 */
+aggrefunc:
+	aggrefunc_type LBRACE STAR RBRACE {
+			Aggrefunc func;
+			aggrefunc_init(&func,$1,NULL,"*",-1);
+			selects_append_aggrefuncs(&CONTEXT->ssql->sstr.selection, &func);
+		}
+	| aggrefunc_type LBRACE ID RBRACE {
+			Aggrefunc func;
+			aggrefunc_init(&func,$1,NULL,$3,-1);
+			selects_append_aggrefuncs(&CONTEXT->ssql->sstr.selection, &func);
+		}
+	| aggrefunc_type LBRACE ID DOT ID RBRACE {
+			Aggrefunc func;
+			aggrefunc_init(&func,$1,$3,$5,-1);
+			selects_append_aggrefuncs(&CONTEXT->ssql->sstr.selection, &func);
+		}
+	| aggrefunc_type LBRACE NUMBER RBRACE {//只支持无符号
+			Aggrefunc func;
+			aggrefunc_init(&func,$1,NULL,NULL,$3);
+			selects_append_aggrefuncs(&CONTEXT->ssql->sstr.selection, &func);
+		}
+	;
+aggrefunc_type:
+	COUNT_F { $$=COUNTS; }
+	| AVG_F { $$=AVGS; }
+	| MAX_F { $$=MAXS; }
+	| MIN_F { $$=MINS; }
+	| SUM_F { $$=SUMS; }
+	;
 attr_list:
     /* empty */
     | COMMA ID attr_list {

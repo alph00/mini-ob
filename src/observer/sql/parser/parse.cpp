@@ -12,11 +12,14 @@ See the Mulan PSL v2 for more details. */
 // Created by Meiyi
 //
 
+#include <cstddef>
+#include <cstring>
 #include <iostream>
 #include <mutex>
 #include "sql/parser/parse.h"
 #include "rc.h"
 #include "common/log/log.h"
+#include "sql/parser/parse_defs.h"
 
 RC parse(char *st, Query *sqln);
 
@@ -39,6 +42,27 @@ void relation_attr_destroy(RelAttr *relation_attr)
   free(relation_attr->attribute_name);
   relation_attr->relation_name = nullptr;
   relation_attr->attribute_name = nullptr;
+}
+
+void aggrefunc_init(Aggrefunc *func, AggrefuncType type, const char *relation_num, const char *attribute_name, int num)
+{
+  func->type = type;
+  if (relation_num != nullptr) {
+    func->attribute.relation_name = strdup(relation_num);
+  } else {
+    func->attribute.relation_name = nullptr;
+  }
+  if (attribute_name != nullptr) {
+    func->attribute.attribute_name = strdup(attribute_name);
+  } else {
+    func->attribute.attribute_name = nullptr;
+  }
+  func->num = -1;
+  func->num = num;
+}
+void aggrefunc_destroy(Aggrefunc *func)
+{
+  relation_attr_destroy(&func->attribute);
 }
 
 void value_init_integer(Value *value, int v)
@@ -151,6 +175,11 @@ void selects_append_conditions(Selects *selects, Condition conditions[], size_t 
   selects->condition_num = condition_num;
 }
 
+void selects_append_aggrefuncs(Selects *selects, Aggrefunc *func)
+{
+  selects->aggrefuncs[selects->aggrefunc_num++] = *func;
+}
+
 void selects_destroy(Selects *selects)
 {
   for (size_t i = 0; i < selects->attr_num; i++) {
@@ -168,6 +197,11 @@ void selects_destroy(Selects *selects)
     condition_destroy(&selects->conditions[i]);
   }
   selects->condition_num = 0;
+
+  for (size_t i = 0; i < selects->aggrefunc_num; i++) {
+    aggrefunc_destroy(&selects->aggrefuncs[i]);
+  }
+  selects->aggrefunc_num = 0;
 }
 void show_index_init(ShowIndex *show_index, const char *relation_name)
 {

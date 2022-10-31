@@ -14,26 +14,49 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include "sql/parser/parse_defs.h"
 #include "storage/common/table.h"
 #include "storage/common/field_meta.h"
 
-class Field
-{
+class Field {
 public:
   Field() = default;
   Field(const Table *table, const FieldMeta *field) : table_(table), field_(field)
   {}
+  Field(const Table *table, const FieldMeta *field, bool isAggrefunc, Aggrefunc func)
+      : table_(table), field_(field), isAggrefunc_(isAggrefunc), func_(func)
+  {}
 
-  const Table *table() const { return table_; }
-  const FieldMeta *meta() const { return field_; }
+  const Table *table() const
+  {
+    return table_;
+  }
+  const FieldMeta *meta() const
+  {
+    return field_;
+  }
+  const Aggrefunc *aggrefunc() const
+  {
+    return &func_;
+  }
+  const bool isAggrefunc() const
+  {
+    return isAggrefunc_;
+  }
 
   AttrType attr_type() const
   {
     return field_->type();
   }
 
-  const char *table_name() const { return table_->name(); }
-  const char *field_name() const { return field_->name(); }
+  const char *table_name() const
+  {
+    return table_->name();
+  }
+  const char *field_name() const
+  {
+    return field_->name();
+  }
 
   void set_table(const Table *table)
   {
@@ -43,7 +66,10 @@ public:
   {
     this->field_ = field;
   }
+
 private:
   const Table *table_ = nullptr;
   const FieldMeta *field_ = nullptr;
+  bool isAggrefunc_ = false;
+  Aggrefunc func_;
 };

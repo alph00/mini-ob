@@ -18,6 +18,8 @@ See the Mulan PSL v2 for more details. */
 #include "common/seda/stage.h"
 #include "sql/parser/parse.h"
 #include "rc.h"
+#include <cfloat>
+#include <climits>
 
 class SQLStageEvent;
 class SessionEvent;
@@ -41,7 +43,7 @@ protected:
   void handle_request(common::StageEvent *event);
   RC do_help(SQLStageEvent *session_event);
   RC do_create_table(SQLStageEvent *sql_event);
-  //drop table
+  // drop table
   RC do_drop_table(SQLStageEvent *sql_event);
   RC do_create_index(SQLStageEvent *sql_event);
   RC do_show_tables(SQLStageEvent *sql_event);
@@ -60,5 +62,10 @@ private:
   Stage *default_storage_stage_ = nullptr;
   Stage *mem_storage_stage_ = nullptr;
 };
-
+struct AggrefuncPara {
+  size_t count = 0;
+  float avg = 0.0, max_f = -FLT_MAX, min_f = FLT_MAX, sum = 0.0;
+  int max_i = -INT_MAX, min_i = INT_MAX;
+  char max_c[16] = {'\0'}, min_c[16] = {'\x7f'};  // 16B够吗？
+};
 #endif  //__OBSERVER_SQL_EXECUTE_STAGE_H__
