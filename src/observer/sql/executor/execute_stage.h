@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "rc.h"
 #include <cfloat>
 #include <climits>
+#include <vector>
 
 class SQLStageEvent;
 class SessionEvent;
@@ -49,7 +50,7 @@ protected:
   RC do_show_tables(SQLStageEvent *sql_event);
   RC do_show_index(SQLStageEvent *sql_event);
   RC do_desc_table(SQLStageEvent *sql_event);
-  RC do_select(SQLStageEvent *sql_event);
+  RC do_select(SQLStageEvent *sql_event, std::vector<Value*> *values = nullptr);
   RC do_insert(SQLStageEvent *sql_event);
   RC do_delete(SQLStageEvent *sql_event);
   RC do_update(SQLStageEvent *sql_event);
@@ -57,6 +58,7 @@ protected:
   RC do_commit(SQLStageEvent *sql_event);
   RC do_clog_sync(SQLStageEvent *sql_event);
 
+  RC get_value(SQLStageEvent *sql_event, SelectStmt *select_stmt, std::vector<Value*> *values);
 protected:
 private:
   Stage *default_storage_stage_ = nullptr;

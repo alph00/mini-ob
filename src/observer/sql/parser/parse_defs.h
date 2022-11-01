@@ -50,6 +50,7 @@ typedef enum {
   DATES,  // qfs
   FLOATS,
   REGEXP,
+  SELECTS,
 } AttrType;
 
 // 聚合函数类型
@@ -68,7 +69,7 @@ typedef struct _Value {
 } Value;
 
 // array of value
-typedef Value Values[MAX_RECORD_NUM];
+typedef Value Values[MAX_NUM];
 
 typedef struct _Condition {
   int left_is_attr;    // TRUE if left-hand side is an attribute
@@ -122,8 +123,9 @@ typedef struct {
 // struct of update
 typedef struct {
   char *relation_name;            // Relation to update
-  char *attribute_name;           // Attribute to update
-  Value value;                    // update value
+  char *attribute_name[MAX_NUM];  // Attribute to update
+  Values values;                  // update value
+  size_t value_num;               // Number of columns to update
   size_t condition_num;           // Length of conditions in Where clause
   Condition conditions[MAX_NUM];  // conditions in Where clause
 } Updates;
@@ -229,6 +231,7 @@ void value_init_integer(Value *value, int v);
 void value_init_float(Value *value, float v);
 void value_init_string(Value *value, const char *v);
 int value_init_date(Value *value, const char *v);
+void value_init_select(Value *value, Query *query);
 void value_destroy(Value *value);
 
 void condition_init(Condition *condition, CompOp comp, int left_is_attr, RelAttr *left_attr, Value *left_value,
@@ -252,8 +255,9 @@ void deletes_init_relation(Deletes *deletes, const char *relation_name);
 void deletes_set_conditions(Deletes *deletes, Condition conditions[], size_t condition_num);
 void deletes_destroy(Deletes *deletes);
 
-void updates_init(Updates *updates, const char *relation_name, const char *attribute_name, Value *value,
+void updates_init(Updates *updates, const char *relation_name, Value value[], size_t value_num,
     Condition conditions[], size_t condition_num);
+void updates_append_attribute(Updates *updates, const char *attr_name, size_t attr_num);
 void updates_destroy(Updates *updates);
 
 void create_table_append_attribute(CreateTable *create_table, AttrInfo *attr_info);
