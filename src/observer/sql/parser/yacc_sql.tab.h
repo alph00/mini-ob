@@ -39,7 +39,7 @@
 # define YY_YY_YACC_SQL_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 #if YYDEBUG
 extern int yydebug;
@@ -119,7 +119,11 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
+<<<<<<< HEAD
 #line 117 "yacc_sql.y"
+=======
+#line 113 "yacc_sql.y"
+>>>>>>> support parsing sub select of update in front-end
 
   struct _Attr *attr;
   struct _Condition *condition1;

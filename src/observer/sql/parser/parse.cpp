@@ -94,6 +94,11 @@ int value_init_date(Value *value, const char *v)
   memcpy(value->data, &dv, sizeof(dv));
   return 0;
 }
+void value_init_select(Value *value, Selects *selects)
+{
+  value->type = SELECTS;
+  value->data = selects;
+}
 void value_init_float(Value *value, float v)
 {
   value->type = FLOATS;
@@ -266,11 +271,10 @@ void deletes_destroy(Deletes *deletes)
   deletes->relation_name = nullptr;
 }
 
-void updates_init(Updates *updates, const char *relation_name, const char *attribute_name, Value *value,
+void updates_init(Updates *updates, const char *relation_name, Value *value,
     Condition conditions[], size_t condition_num)
 {
   updates->relation_name = strdup(relation_name);
-  updates->attribute_name = strdup(attribute_name);
   updates->value = *value;
 
   assert(condition_num <= sizeof(updates->conditions) / sizeof(updates->conditions[0]));
@@ -278,6 +282,11 @@ void updates_init(Updates *updates, const char *relation_name, const char *attri
     updates->conditions[i] = conditions[i];
   }
   updates->condition_num = condition_num;
+}
+
+void updates_append_attribute(Updates *updates, const char *rel_name)
+{
+  updates->attribute_name = strdup(rel_name);
 }
 
 void updates_destroy(Updates *updates)
@@ -478,7 +487,6 @@ extern "C" int sql_parse(const char *st, Query *sqls);
 RC parse(const char *st, Query *sqln)
 {
   sql_parse(st, sqln);
-
   if (sqln->flag == SCF_ERROR)
     return SQL_SYNTAX;
   else
