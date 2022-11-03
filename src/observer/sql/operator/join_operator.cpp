@@ -94,8 +94,7 @@ RC JoinOperator::next()
       break;
     }
     if (rc2 == RC::RECORD_EOF) {
-      right_->close();
-      right_->open();
+
       rc = left_->next();
       if (rc != RC::RECORD_EOF) {
         Tuple **t = left_->current_tuple();
@@ -107,6 +106,21 @@ RC JoinOperator::next()
         for (size_t i = 0; i < left_->tuplesNum() / (sizeof(Tuple *)); ++i) {
           tuples_[i] = (RowTuple *)t[i];
         }
+      }
+      right_->close();
+      right_->open();
+      RC rc3 = right_->next();
+      if (rc3 != RC::SUCCESS) {
+        return rc3;
+      }
+      Tuple **t = right_->current_tuple();
+      if (nullptr == t || nullptr == t[0]) {  // 通过t**,和t[0]*代表
+        LOG_WARN("failed to get tuple from operator");
+        return RC::INTERNAL;
+      }
+      // memcpy(tuples_ + left_->tuplesNum(), t, right_->tuplesNum());
+      for (size_t i = 0; i < right_->tuplesNum() / (sizeof(Tuple *)); ++i) {
+        tuples_[left_->tuplesNum() / (sizeof(Tuple *)) + i] = (RowTuple *)t[i];
       }
     }
     break;
