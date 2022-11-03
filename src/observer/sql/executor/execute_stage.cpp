@@ -985,6 +985,7 @@ RC ExecuteStage::do_update(SQLStageEvent *sql_event)
       if (rc != RC::SUCCESS) {
         LOG_WARN("fail to get value of sub select_stmt");
         session_event->set_response("FAILURE");
+        return rc;
       }
       free(update_stmt->value(i)->data);
       update_stmt->set_value(i, actual_value->type, actual_value->data);
@@ -1119,7 +1120,6 @@ RC ExecuteStage::get_value(SelectStmt *select_stmt, Value *value)
 
 
   size_t record_num = 0;
-  std::stringstream ss;
   while ((rc = project_oper.next()) == RC::SUCCESS) {
     if (++record_num > 1) {
       break;
@@ -1137,7 +1137,6 @@ RC ExecuteStage::get_value(SelectStmt *select_stmt, Value *value)
       LOG_WARN("failed to transfer field to value, index=%d, rc=%s", 0, strrc(rc));
       return rc;
     }
-    ++record_num;
   }
 
   if (rc != RC::RECORD_EOF) {
@@ -1147,5 +1146,8 @@ RC ExecuteStage::get_value(SelectStmt *select_stmt, Value *value)
     rc = project_oper.close();
   }
 
+  if (record_num == 0) {
+    rc = RC::INTERNAL;
+  }
   return rc;
 }

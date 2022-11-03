@@ -100,7 +100,7 @@ RC UpdateStmt::create(Db *db, const Updates &update_sql, Stmt *&stmt)
           LOG_WARN("failed to create stmt. rc=%d:%s", rc, strrc(rc));
           return rc;
         }
-        query_destroy((Query*)value->data);
+//        query_destroy((Query*)value->data);
         value->data = stmt;
         LOG_DEBUG("succeed to process sub select query");
       } else {
