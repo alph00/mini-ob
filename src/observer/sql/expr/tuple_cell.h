@@ -28,22 +28,11 @@ public:
   TupleCell(AttrType attr_type, char *data) : attr_type_(attr_type), data_(data)
   {}
 
-  void set_type(AttrType type)
-  {
-    this->attr_type_ = type;
-  }
-  void set_length(int length)
-  {
-    this->length_ = length;
-  }
-  void set_data(char *data)
-  {
-    this->data_ = data;
-  }
-  void set_data(const char *data)
-  {
-    this->set_data(const_cast<char *>(data));
-  }
+  void set_type(AttrType type) { this->attr_type_ = type; }
+  void set_length(int length) { this->length_ = length; }
+  void set_data(char *data) { this->data_ = data; }
+  void set_data(const char *data) { this->set_data(const_cast<char *>(data)); }
+  RC get_value(Value *value);
 
   void to_string(std::ostream &os) const;
 

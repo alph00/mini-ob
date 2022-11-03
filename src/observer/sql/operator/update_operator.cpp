@@ -24,15 +24,19 @@ RC UpdateOperator::open()
   }
 
   Table *table = update_stmt_->table();
-  const char *field_name = update_stmt_->field_name();
-  const FieldMeta *field = table->table_meta().field(field_name);
-  const Value *value = update_stmt_->value();
-  size_t copy_len = field->len();
-  if (field->type() == CHARS) {
-    const size_t data_len = strlen((const char *)value->data);
-    if (copy_len > data_len) {
-      copy_len = data_len + 1;
+  const FieldMeta *fields[MAX_NUM];
+  const size_t field_num = update_stmt_->field_num();
+  size_t copy_lens[MAX_NUM];
+  for (size_t i = 0; i < field_num; i++) {
+    fields[i] = table->table_meta().field(update_stmt_->field_name(i));
+    size_t copy_len = fields[i]->len();
+    if (fields[i]->type() == CHARS) {
+      const size_t data_len = strlen((const char *)update_stmt_->value(i)->data);
+      if (copy_len > data_len) {
+        copy_len = data_len + 1;
+      }
     }
+    copy_lens[i] = copy_len;
   }
 
   while (RC::SUCCESS == (rc = child->next())) {
@@ -46,7 +50,9 @@ RC UpdateOperator::open()
     Record &record = row_tuple->record();
 
     char *record_data = record.data();
-    memcpy(record_data + field->offset(), value->data, copy_len);
+    for (size_t i = 0; i < field_num; i++) {
+      memcpy(record_data + fields[i]->offset(), update_stmt_->value(i)->data, copy_lens[i]);
+    }
     record.set_data(record_data);
 
     rc = table->update_record(trx_, &record);

@@ -57,6 +57,7 @@ protected:
   RC do_commit(SQLStageEvent *sql_event);
   RC do_clog_sync(SQLStageEvent *sql_event);
 
+  RC get_value(SelectStmt *select_stmt, Value *value);
 protected:
 private:
   Stage *default_storage_stage_ = nullptr;

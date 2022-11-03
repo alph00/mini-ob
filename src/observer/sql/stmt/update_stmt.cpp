@@ -18,9 +18,10 @@ See the Mulan PSL v2 for more details. */
 #include "storage/common/db.h"
 #include "storage/common/table.h"
 
-UpdateStmt::UpdateStmt(Table *table, const Value *values, int value_amount, const char* field_name, FilterStmt *filter_stmt)
+UpdateStmt::UpdateStmt(Table *table, const Value values[], int value_amount, const char * const field_name[], FilterStmt *filter_stmt)
   : table_ (table), values_(values), value_amount_(value_amount), field_name_(field_name), filter_stmt_(filter_stmt)
-{}
+{
+}
 
 UpdateStmt::~UpdateStmt()
 {
@@ -28,6 +29,35 @@ UpdateStmt::~UpdateStmt()
     delete filter_stmt_;
     filter_stmt_ = nullptr;
   }
+}
+
+const char* UpdateStmt::field_name(size_t idx) const {
+  if (idx >= value_amount_) {
+    LOG_WARN("invalid index %d to fields", idx);
+    return nullptr;
+  }
+
+  return field_name_[idx];
+}
+
+const Value * UpdateStmt::value(size_t idx) const {
+  if (idx >= value_amount_) {
+    LOG_WARN("invalid index %d to values", idx);
+    return nullptr;
+  }
+
+  return values_ + idx;
+}
+
+void UpdateStmt::set_value(size_t idx, AttrType type, void *data)
+{
+  if (idx >= value_amount_) {
+    LOG_WARN("invalid index %d to values", idx);
+    return;
+  }
+  Value *temp = const_cast<Value *>(values_ + idx);
+  temp->type = type;
+  temp->data = data;
 }
 
 RC UpdateStmt::create(Db *db, const Updates &update_sql, Stmt *&stmt)
@@ -50,21 +80,42 @@ RC UpdateStmt::create(Db *db, const Updates &update_sql, Stmt *&stmt)
   // ...
 
   // check fields type
-  const Value *value = &update_sql.value;
-  char *field_name = update_sql.attribute_name;
-  const TableMeta &table_meta = table->table_meta();
-  const FieldMeta *field_meta = table_meta.field(field_name);
-  if (field_meta == nullptr) {
-    LOG_WARN("no such field. field=%s.%s.%s", db->name(), table->name(), field_name);
-    return RC::SCHEMA_FIELD_MISSING;
+  for (size_t i = 0; i < update_sql.value_num; i++) {
+    Value *value = const_cast<Value *>(update_sql.values + i);
+    char *field_name = update_sql.attribute_name[i];
+    const TableMeta &table_meta = table->table_meta();
+    const FieldMeta *field_meta = table_meta.field(field_name);
+    if (field_meta == nullptr) {
+      LOG_WARN("no such field. field=%s.%s.%s", db->name(), table->name(), field_name);
+      return RC::SCHEMA_FIELD_MISSING;
+    }
+
+    const AttrType field_type = field_meta->type();
+    const AttrType value_type = value->type;
+    if (field_type != value_type) {
+      if (value_type == SELECTS) {
+        Stmt *stmt = nullptr;
+        RC rc = Stmt::create_stmt(db, *(Query*)value->data, stmt);
+        if (rc != RC::SUCCESS) {
+          LOG_WARN("failed to create stmt. rc=%d:%s", rc, strrc(rc));
+          return rc;
+        }
+        query_destroy((Query*)value->data);
+        value->data = stmt;
+        LOG_DEBUG("succeed to process sub select query");
+      } else {
+        LOG_WARN("field type mismatch. table=%s, field=%s, field type=%d, value_type=%d",
+                 table_name, field_meta->name(), field_type, value_type);
+        return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+      }
+
+    }
   }
 
-  const AttrType field_type = field_meta->type();
-  const AttrType value_type = value->type;
-  if (field_type != value_type) {
-    LOG_WARN("field type mismatch. table=%s, field=%s, field type=%d, value_type=%d",
-             table_name, field_meta->name(), field_type, value_type);
-    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+  // create attribute names
+  char **attr_names = (char**)malloc(sizeof(char*) * update_sql.value_num);
+  for (size_t i = 0; i < update_sql.value_num; i++) {
+    attr_names[i] = strdup(update_sql.attribute_name[i]);
   }
 
   // create filter stmt
@@ -79,6 +130,6 @@ RC UpdateStmt::create(Db *db, const Updates &update_sql, Stmt *&stmt)
     return rc;
   }
 
-  stmt = new UpdateStmt(table, value, 1, field_name, filter_stmt);
+  stmt = new UpdateStmt(table, update_sql.values, update_sql.value_num, attr_names, filter_stmt);
   return RC::SUCCESS;
 }

@@ -975,13 +975,30 @@ RC ExecuteStage::do_update(SQLStageEvent *sql_event)
   }
 
   UpdateStmt *update_stmt = (UpdateStmt *)stmt;
+  RC rc = RC::SUCCESS;
+
+  // execute sub query
+  for (size_t i = 0; i < update_stmt->field_num(); i++) {
+    if (update_stmt->value(i)->type == SELECTS) {
+      Value *actual_value = (Value *)malloc(sizeof(Value));
+      rc = get_value((SelectStmt *)update_stmt->value(i)->data, actual_value);
+      if (rc != RC::SUCCESS) {
+        LOG_WARN("fail to get value of sub select_stmt");
+        session_event->set_response("FAILURE");
+      }
+      free(update_stmt->value(i)->data);
+      update_stmt->set_value(i, actual_value->type, actual_value->data);
+      free(actual_value);
+    }
+  }
+
   TableScanOperator scan_oper(update_stmt->table());
   PredicateOperator pred_oper(update_stmt->filter_stmt());
   pred_oper.add_child(&scan_oper);
   UpdateOperator update_oper(update_stmt, trx);
   update_oper.add_child(&pred_oper);
 
-  RC rc = update_oper.open();
+  rc = update_oper.open();
   if (rc != RC::SUCCESS) {
     session_event->set_response("FAILURE");
   } else {
@@ -1061,6 +1078,73 @@ RC ExecuteStage::do_clog_sync(SQLStageEvent *sql_event)
     session_event->set_response("FAILURE\n");
   } else {
     session_event->set_response("SUCCESS\n");
+  }
+
+  return rc;
+}
+
+RC ExecuteStage::get_value(SelectStmt *select_stmt, Value *value)
+{
+  RC rc = RC::SUCCESS;
+  if (select_stmt->tables().size() != 1) {
+    LOG_WARN("select more than 1 tables is not supported");
+    rc = RC::UNIMPLENMENT;
+    return rc;
+  }
+  if (select_stmt->query_fields().size() != 1) {
+    LOG_WARN("select more than 1 field is not allowed");
+    rc = RC::INVALID_ARGUMENT;
+    return rc;
+  }
+
+  Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt());
+  if (nullptr == scan_oper) {
+    scan_oper = new TableScanOperator(select_stmt->tables()[0]);
+  }
+
+  DEFER([&]() { delete scan_oper; });
+
+  PredicateOperator pred_oper(select_stmt->filter_stmt());
+  pred_oper.add_child(scan_oper);
+  ProjectOperator project_oper;
+  project_oper.add_child(&pred_oper);
+  for (const Field &field : select_stmt->query_fields()) {
+    project_oper.add_projection(field.table(), field.meta());
+  }
+  rc = project_oper.open();
+  if (rc != RC::SUCCESS) {
+    LOG_WARN("failed to open operator");
+    return rc;
+  }
+
+
+  size_t record_num = 0;
+  std::stringstream ss;
+  while ((rc = project_oper.next()) == RC::SUCCESS) {
+    if (++record_num > 1) {
+      break;
+    }
+    Tuple *tuple = project_oper.current_tuple();
+    TupleCell cell;
+    rc = tuple->cell_at(0, cell);
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+      break;
+    }
+
+    rc = cell.get_value(value);
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("failed to transfer field to value, index=%d, rc=%s", 0, strrc(rc));
+      return rc;
+    }
+    ++record_num;
+  }
+
+  if (rc != RC::RECORD_EOF) {
+    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+    project_oper.close();
+  } else {
+    rc = project_oper.close();
   }
 
   return rc;

@@ -94,10 +94,10 @@ int value_init_date(Value *value, const char *v)
   memcpy(value->data, &dv, sizeof(dv));
   return 0;
 }
-void value_init_select(Value *value, Selects *selects)
+void value_init_select(Value *value, Query *query)
 {
   value->type = SELECTS;
-  value->data = selects;
+  value->data = query;
 }
 void value_init_float(Value *value, float v)
 {
@@ -271,11 +271,16 @@ void deletes_destroy(Deletes *deletes)
   deletes->relation_name = nullptr;
 }
 
-void updates_init(Updates *updates, const char *relation_name, Value *value,
+void updates_init(Updates *updates, const char *relation_name, Value value[], size_t value_num,
     Condition conditions[], size_t condition_num)
 {
   updates->relation_name = strdup(relation_name);
-  updates->value = *value;
+
+  assert(value_num <= sizeof(updates->values) / sizeof(updates->values[0]));
+  for (size_t i = 0; i < value_num; i++) {
+    updates->values[i] = value[i];
+  }
+  updates->value_num = value_num;
 
   assert(condition_num <= sizeof(updates->conditions) / sizeof(updates->conditions[0]));
   for (size_t i = 0; i < condition_num; i++) {
@@ -284,19 +289,24 @@ void updates_init(Updates *updates, const char *relation_name, Value *value,
   updates->condition_num = condition_num;
 }
 
-void updates_append_attribute(Updates *updates, const char *rel_name)
+void updates_append_attribute(Updates *updates, const char *attr_name, size_t attr_num)
 {
-  updates->attribute_name = strdup(rel_name);
+  updates->attribute_name[attr_num] = strdup(attr_name);
 }
 
 void updates_destroy(Updates *updates)
 {
   free(updates->relation_name);
-  free(updates->attribute_name);
-  updates->relation_name = nullptr;
-  updates->attribute_name = nullptr;
 
-  value_destroy(&updates->value);
+  for (size_t i = 0; i < updates->value_num; i++) {
+    free(updates->attribute_name[i]);
+    updates->attribute_name[i] = nullptr;
+  }
+  updates->relation_name = nullptr;
+
+  for (size_t i = 0; i < updates->value_num; i++) {
+    value_destroy(updates->values + i);
+  }
 
   for (size_t i = 0; i < updates->condition_num; i++) {
     condition_destroy(&updates->conditions[i]);
