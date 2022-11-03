@@ -13,12 +13,15 @@ See the Mulan PSL v2 for more details. */
 //
 
 #include "common/log/log.h"
+#include "sql/expr/tuple.h"
 #include "sql/operator/project_operator.h"
 #include "storage/record/record.h"
 #include "storage/common/table.h"
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 
 RC ProjectOperator::open()
 {
@@ -34,6 +37,12 @@ RC ProjectOperator::open()
     return rc;
   }
 
+  table_sum = children_[0]->tuplesNum() / sizeof(Tuple *);
+  tuples_ = (Tuple **)malloc(sizeof(ProjectTuple) * table_sum);
+  for (size_t i = 0; i < table_sum; ++i) {
+    ProjectTuple *t = new ProjectTuple;
+    tuples_[i] = t;
+  }
   return RC::SUCCESS;
 }
 
@@ -44,17 +53,31 @@ RC ProjectOperator::next()
 
 RC ProjectOperator::close()
 {
+  for (size_t i = 0; i < table_sum; ++i) {
+    free(tuples_[i]);
+  }
+  free(tuples_);
+  tuples_ = nullptr;
+  for (size_t i = 0; i < alias.size(); ++i) {
+    free(alias[i]);
+  }
   children_[0]->close();
   return RC::SUCCESS;
 }
-Tuple *ProjectOperator::current_tuple()
+Tuple **ProjectOperator::current_tuple()
 {
-  tuple_.set_tuple(children_[0]->current_tuple());
-  return &tuple_;
+  for (int i = 0; i < children_[0]->tuplesNum() / sizeof(Tuple *); ++i) {
+    ((ProjectTuple *)tuples_[i])->set_tuple(children_[0]->current_tuple()[i]);
+  }
+  return tuples_;
+}
+int ProjectOperator::tuplesNum()
+{
+  return children_[0]->tuplesNum();
 }
 
 void ProjectOperator::add_projection(
-    const Table *table, const FieldMeta *field_meta, const bool isAggrefunc, const Aggrefunc *func)
+    const Table *table, const FieldMeta *field_meta, const bool isAggrefunc, const Aggrefunc *func, int i)
 {
   // 对单表来说，展示的(alias) 字段总是字段名称，
   // 对多表查询来说，展示的alias 需要带表名字
@@ -94,12 +117,20 @@ void ProjectOperator::add_projection(
     strcat(header, ")");
     spec->set_alias(header);
   } else {
-    spec->set_alias(field_meta->name());
+    if (table_n2id.size() > 1) {  // 因为不会出现x.x和x同时存在//此时为多表
+      char *str = strdup(table->name());
+      strcat(str, ".");
+      strcat(str, field_meta->name());
+      spec->set_alias(str);
+      alias.emplace_back(str);
+    } else {  // 此时为单表
+      spec->set_alias(field_meta->name());
+    }
   }
-  tuple_.add_cell_spec(spec);
+  ((ProjectTuple *)tuples_[i])->add_cell_spec(spec);
 }
 
-RC ProjectOperator::tuple_cell_spec_at(int index, const TupleCellSpec *&spec) const
+RC ProjectOperator::tuple_cell_spec_at(int index, const TupleCellSpec *&spec, int i) const
 {
-  return tuple_.cell_spec_at(index, spec);
+  return ((ProjectTuple *)tuples_[i])->cell_spec_at(index, spec);
 }

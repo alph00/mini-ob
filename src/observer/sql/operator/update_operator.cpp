@@ -9,7 +9,8 @@
 #include "storage/trx/trx.h"
 #include "sql/stmt/update_stmt.h"
 
-RC UpdateOperator::open() {
+RC UpdateOperator::open()
+{
   if (children_.size() != 1) {
     LOG_WARN("update operator must has 1 child");
     return RC::INTERNAL;
@@ -23,7 +24,7 @@ RC UpdateOperator::open() {
   }
 
   Table *table = update_stmt_->table();
-  const char* field_name = update_stmt_->field_name();
+  const char *field_name = update_stmt_->field_name();
   const FieldMeta *field = table->table_meta().field(field_name);
   const Value *value = update_stmt_->value();
   size_t copy_len = field->len();
@@ -35,7 +36,7 @@ RC UpdateOperator::open() {
   }
 
   while (RC::SUCCESS == (rc = child->next())) {
-    Tuple *tuple = child->current_tuple();
+    Tuple *tuple = child->current_tuple()[0];
     if (nullptr == tuple) {
       LOG_WARN("failed to get current record: %s", strrc(rc));
       return rc;

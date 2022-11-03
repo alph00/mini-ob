@@ -161,6 +161,10 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
 
         Table *table = iter->second;
         if (0 == strcmp(field_name, "*")) {
+          if (func.type != COUNTS) {  // 不允许出现avg(*)
+            LOG_WARN("invalid aggregation sytax!");
+            return RC::SQL_SYNTAX;
+          }
           query_fields.push_back(Field(table, nullptr, true, func));
         } else {
           const FieldMeta *field_meta = table->table_meta().field(field_name);
