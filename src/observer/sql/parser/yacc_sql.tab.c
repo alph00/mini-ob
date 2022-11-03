@@ -689,10 +689,13 @@ union yyalloc
 /* YYLAST -- Last index in YYTABLE.  */
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #define YYLAST   193
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #define YYLAST   189
 =======
@@ -704,7 +707,13 @@ union yyalloc
 =======
 #define YYLAST   184
 >>>>>>> update without aggregation-func
+<<<<<<< HEAD
 >>>>>>> update without aggregation-func
+=======
+=======
+#define YYLAST   177
+>>>>>>> fix: update syntax
+>>>>>>> fix: update syntax
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  60
@@ -898,10 +907,13 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #define YYPACT_NINF (-122)
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #define YYPACT_NINF (-120)
 =======
@@ -913,7 +925,13 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 =======
 #define YYPACT_NINF (-108)
 >>>>>>> update without aggregation-func
+<<<<<<< HEAD
 >>>>>>> update without aggregation-func
+=======
+=======
+#define YYPACT_NINF (-106)
+>>>>>>> fix: update syntax
+>>>>>>> fix: update syntax
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -927,6 +945,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     -122,     5,  -122,     0,    74,    26,   -42,    14,    31,    -1,
@@ -953,6 +972,8 @@ static const yytype_int16 yypact[] =
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
     -120,     4,  -120,    -1,    40,    26,   -49,    20,    17,     5,
        2,   -12,    44,    62,    75,    76,    77,    46,  -120,  -120,
@@ -1019,7 +1040,31 @@ static const yytype_int16 yypact[] =
     -108,   147,   157,   132,  -108,  -108,    46,   118,  -108,  -108,
     -108,  -108,  -108,  -108,   135,  -108,  -108,   119,  -108
 >>>>>>> update without aggregation-func
+<<<<<<< HEAD
 >>>>>>> update without aggregation-func
+=======
+=======
+    -106,     4,  -106,    -3,    26,   -24,   -40,    42,    24,   -22,
+       2,   -15,    38,    48,    57,    65,    87,     8,  -106,  -106,
+    -106,  -106,  -106,  -106,  -106,  -106,  -106,  -106,  -106,  -106,
+    -106,  -106,  -106,  -106,  -106,  -106,    92,  -106,     9,    11,
+      51,    59,    -7,    88,    76,   107,   108,    81,  -106,    63,
+      64,    79,  -106,  -106,  -106,  -106,  -106,    77,  -106,   100,
+      82,   115,   117,    71,    72,  -106,  -106,    73,  -106,  -106,
+      74,    95,    94,    78,    75,    80,    83,  -106,  -106,    10,
+      88,   111,   128,   116,    -4,   131,    96,   118,   106,  -106,
+     120,    58,   123,    90,  -106,  -106,    91,    94,  -106,    56,
+     124,  -106,  -106,  -106,    29,  -106,    43,   109,  -106,     6,
+      78,    94,   137,    80,   129,  -106,  -106,  -106,  -106,   132,
+      97,    88,   111,  -106,   127,   116,   146,   101,   119,  -106,
+    -106,  -106,  -106,  -106,  -106,  -106,    17,    44,    -4,  -106,
+    -106,  -106,  -106,   141,   118,   149,   104,   120,   152,   110,
+     139,  -106,  -106,    56,   142,   124,  -106,    43,  -106,  -106,
+    -106,   130,  -106,   109,   143,  -106,  -106,   158,  -106,  -106,
+    -106,   145,   160,   127,  -106,  -106,    50,   114,  -106,  -106,
+    -106,  -106,  -106,  -106,   138,  -106,  -106,   121,  -106
+>>>>>>> fix: update syntax
+>>>>>>> fix: update syntax
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -1090,16 +1135,16 @@ static const yytype_int8 yydefact[] =
        0,     0,    68,    68,     0,     0,     0,     0,    24,     0,
        0,     0,    25,    26,    27,    23,    22,     0,    63,     0,
        0,     0,     0,     0,     0,    66,    65,     0,    31,    29,
-       0,     0,    73,     0,    58,     0,     0,     0,    28,    33,
-      68,    68,    71,     0,     0,     0,     0,     0,     0,    73,
-       0,    44,    35,     0,     0,     0,    69,    67,     0,    73,
-      30,     0,    46,    51,    52,    53,     0,    54,     0,    75,
-      55,     0,    58,     0,     0,     0,     0,    40,    41,    42,
-      43,    38,     0,    68,    71,    64,    49,     0,     0,     0,
-       0,    90,    84,    85,    86,    87,    88,    89,     0,     0,
-       0,    74,    62,    60,    57,     0,    59,    56,     0,    35,
-       0,     0,     0,    70,    72,     0,     0,    46,    45,     0,
-      91,    79,    77,    80,    78,    75,     0,     0,    36,    34,
+       0,     0,    73,     0,     0,     0,     0,    28,    33,    68,
+      68,    71,     0,     0,     0,     0,     0,    58,     0,    44,
+      35,     0,     0,     0,    69,    67,     0,    73,    30,     0,
+      46,    51,    52,    53,     0,    54,     0,    75,    55,     0,
+       0,    73,     0,     0,     0,    40,    41,    42,    43,    38,
+       0,    68,    71,    64,    49,     0,     0,     0,     0,    90,
+      84,    85,    86,    87,    88,    89,     0,     0,     0,    74,
+      62,    60,    57,     0,    58,     0,     0,    35,     0,     0,
+       0,    70,    72,     0,     0,    46,    45,     0,    91,    79,
+      77,    80,    78,    75,     0,    59,    56,     0,    36,    34,
       39,     0,     0,    49,    48,    47,     0,     0,    76,    61,
       92,    37,    32,    50,     0,    81,    82,     0,    83
 >>>>>>> update without aggregation-func
@@ -1111,6 +1156,7 @@ static const yytype_int8 yypgoto[] =
 {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     -122,  -122,  -122,  -122,  -122,  -122,  -122,  -122,  -122,  -122,
     -122,  -122,  -122,  -122,  -122,  -122,    23,    54,  -122,  -122,
     -122,  -122,    15,    43,     1,  -116,  -122,  -122,  -122,  -122,
@@ -1118,6 +1164,8 @@ static const yytype_int8 yypgoto[] =
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
     -120,  -120,  -120,  -120,  -120,  -120,  -120,  -120,  -120,  -120,
     -120,  -120,  -120,  -120,  -120,  -120,    24,    50,  -120,  -120,
@@ -1140,7 +1188,17 @@ static const yytype_int8 yypgoto[] =
     -108,  -108,  -108,    28,  -108,   -43,    50,   -48,    11,    35,
     -107,  -108
 >>>>>>> update without aggregation-func
+<<<<<<< HEAD
 >>>>>>> update without aggregation-func
+=======
+=======
+    -106,  -106,  -106,  -106,  -106,  -106,  -106,  -106,  -106,  -106,
+    -106,  -106,  -106,  -106,  -106,  -106,    18,    54,  -106,  -106,
+    -106,  -106,    13,    45,    -1,   -97,  -106,  -106,    66,    25,
+    -106,  -106,  -106,    30,  -106,   -43,    52,   -91,    12,    39,
+    -105,  -106
+>>>>>>> fix: update syntax
+>>>>>>> fix: update syntax
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -1159,6 +1217,7 @@ static const yytype_uint8 yydefgoto[] =
 =======
       -1,     1,    18,    19,    20,    21,    22,    23,    24,    25,
 <<<<<<< HEAD
+<<<<<<< HEAD
       26,    27,    28,    29,    30,    31,   114,    91,   167,   119,
       92,    32,   126,   101,   152,   107,    33,    34,    74,   142,
      143,    35,    36,    44,    65,    98,    86,   139,   108,   136,
@@ -1173,7 +1232,16 @@ static const yytype_uint8 yydefgoto[] =
      144,   145,    35,    36,    44,    65,    99,    86,   141,   109,
      138,    37
 >>>>>>> update without aggregation-func
+<<<<<<< HEAD
 >>>>>>> update without aggregation-func
+=======
+=======
+      26,    27,    28,    29,    30,    31,   114,    90,   171,   119,
+      91,    32,   126,   100,   154,   106,    33,    34,    87,   111,
+     142,   143,    35,    36,    44,    65,    97,    85,   139,   107,
+     136,    37
+>>>>>>> fix: update syntax
+>>>>>>> fix: update syntax
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -1181,6 +1249,7 @@ static const yytype_uint8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       71,   141,   139,   154,    88,     2,    37,    89,    38,     3,
@@ -1206,6 +1275,8 @@ static const yytype_uint8 yytable[] =
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
       71,   139,   137,   152,     2,    37,    51,    38,     3,     4,
      111,   155,    68,     5,     6,     7,     8,     9,    10,    11,
@@ -1270,11 +1341,35 @@ static const yytype_uint8 yytable[] =
      175,   157,   146,   166,   154,   165,   178,     0,     0,     0,
        0,     0,     0,     0,   112
 >>>>>>> update without aggregation-func
+<<<<<<< HEAD
 >>>>>>> update without aggregation-func
+=======
+=======
+      66,   137,   124,    38,     2,    39,   123,    49,     3,     4,
+      45,    63,   141,     5,     6,     7,     8,     9,    10,    11,
+     145,    64,   140,    12,    13,    14,    42,    48,    63,    43,
+      15,    16,    40,    50,    41,    51,    94,    95,    93,   160,
+     162,    52,    17,   101,   102,   103,   104,    57,   105,    46,
+      47,    53,   176,   101,   102,   103,   173,   127,   105,    59,
+      54,    60,   128,   129,   101,   102,   103,   159,    55,   105,
+     130,   131,   132,   133,   134,   135,   128,   129,   151,   185,
+     115,   116,   117,   118,   130,   131,   132,   133,   134,   135,
+      56,   101,   102,   103,   161,    58,   105,   101,   102,   103,
+     184,    61,   105,   101,   102,   103,    63,    67,   105,    62,
+      68,    69,    70,    71,    72,    73,    75,    74,    77,    76,
+      78,    79,    80,    81,    82,    83,    84,    88,    86,    96,
+      89,    98,    99,    92,   108,   112,   110,   109,   113,   120,
+     121,   122,   125,   146,   138,   153,   148,   150,   149,   156,
+       5,   157,   166,   158,   167,   169,   172,   170,   177,   174,
+     179,   180,   181,   182,   186,   168,   187,   147,   175,   165,
+     155,   188,   183,   164,   152,   178,   144,   163
+>>>>>>> fix: update syntax
+>>>>>>> fix: update syntax
 };
 
-static const yytype_int16 yycheck[] =
+static const yytype_uint8 yycheck[] =
 {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       47,   117,   110,   124,    55,     0,     6,    58,     8,     4,
@@ -1300,6 +1395,8 @@ static const yytype_int16 yycheck[] =
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
       47,   115,   108,   122,     0,     6,    55,     8,     4,     5,
       17,   125,    18,     9,    10,    11,    12,    13,    14,    15,
@@ -1364,7 +1461,30 @@ static const yytype_int16 yycheck[] =
      157,   127,   112,   145,   124,   140,   165,    -1,    -1,    -1,
       -1,    -1,    -1,    -1,    88
 >>>>>>> update without aggregation-func
+<<<<<<< HEAD
 >>>>>>> update without aggregation-func
+=======
+=======
+      43,   106,    99,     6,     0,     8,    97,    29,     4,     5,
+      50,    18,   109,     9,    10,    11,    12,    13,    14,    15,
+     111,    28,    16,    19,    20,    21,    50,     3,    18,    53,
+      26,    27,     6,    31,     8,    50,    79,    80,    28,   136,
+     137,     3,    38,    47,    48,    49,    50,    39,    52,     7,
+       8,     3,   157,    47,    48,    49,   153,    28,    52,    50,
+       3,    50,    33,    34,    47,    48,    49,    50,     3,    52,
+      41,    42,    43,    44,    45,    46,    33,    34,   121,   176,
+      22,    23,    24,    25,    41,    42,    43,    44,    45,    46,
+       3,    47,    48,    49,    50,     3,    52,    47,    48,    49,
+      50,    50,    52,    47,    48,    49,    18,    31,    52,    50,
+       3,     3,    31,    50,    50,    36,    16,    40,     3,    37,
+       3,    50,    50,    50,    50,    30,    32,    52,    50,    18,
+      50,     3,    16,    50,     3,    29,    18,    41,    18,    16,
+      50,    50,    18,     6,    35,    18,    17,    50,    16,     3,
+       9,    50,     3,    34,    50,     3,    17,    47,    28,    17,
+      17,     3,    17,     3,    50,   147,    28,   113,   155,   144,
+     125,    50,   173,   143,   122,   163,   110,   138
+>>>>>>> fix: update syntax
+>>>>>>> fix: update syntax
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
@@ -1415,6 +1535,7 @@ static const yytype_int8 yystos[] =
        6,     8,    50,    53,    89,    50,     7,     8,     3,    29,
       31,    50,     3,     3,     3,     3,     3,    39,     3,    50,
       50,    50,    50,    18,    28,    90,    90,    31,     3,     3,
+<<<<<<< HEAD
       31,    50,    50,    36,    83,    40,    16,    37,     3,     3,
 <<<<<<< HEAD
       50,    50,    50,    50,    30,    32,    91,    50,    91,    52,
@@ -1442,6 +1563,18 @@ static const yytype_int8 yystos[] =
       35,    93,    16,    80,    85,    86,    84,     3,     6,    72,
       17,    16,    50,    90,    91,    18,    79,    78,     3,    50,
       34,    50,    80,    50,    80,    94,    88,    50,    71,     3,
+=======
+      31,    50,    50,    36,    40,    16,    37,     3,     3,    50,
+      50,    50,    50,    30,    32,    92,    50,    83,    52,    50,
+      72,    75,    50,    28,    90,    90,    18,    91,     3,    16,
+      78,    47,    48,    49,    50,    52,    80,    94,     3,    41,
+      18,    84,    29,    18,    71,    22,    23,    24,    25,    74,
+      16,    50,    50,    92,    80,    18,    77,    28,    33,    34,
+      41,    42,    43,    44,    45,    46,    95,    95,    35,    93,
+      16,    80,    85,    86,    83,    92,     6,    72,    17,    16,
+      50,    90,    91,    18,    79,    78,     3,    50,    34,    50,
+      80,    50,    80,    94,    88,    84,     3,    50,    71,     3,
+>>>>>>> fix: update syntax
       47,    73,    17,    80,    17,    77,    95,    28,    93,    17,
        3,    17,     3,    79,    50,    80,    50,    28,    50
 >>>>>>> update without aggregation-func
@@ -1504,6 +1637,7 @@ static const yytype_int8 yyr2[] =
        1,     1,     1,     1,     1,     7,     0,     3,     4,     0,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
        3,     1,     1,     1,     1,     5,     8,     7,     2,     2,
 <<<<<<< HEAD
        4,     4,     2,     0,     3,     4,     4,     6,     4,     1,
@@ -1527,6 +1661,9 @@ static const yytype_int8 yyr2[] =
 =======
 =======
        3,     1,     1,     1,     1,     5,     6,     4,     0,     3,
+=======
+       3,     1,     1,     1,     1,     5,     7,     3,     0,     3,
+>>>>>>> fix: update syntax
        1,     3,     1,     2,     6,     2,     2,     4,     0,     3,
        5,     0,     3,     0,     3,     0,     3,     3,     3,     3,
        3,     5,     5,     7,     1,     1,     1,     1,     1,     1,
@@ -2060,7 +2197,7 @@ yyreduce:
                    {
         CONTEXT->ssql->flag=SCF_EXIT;//"exit";
     }
-#line 1566 "yacc_sql.tab.c"
+#line 1564 "yacc_sql.tab.c"
     break;
 
   case 23:
@@ -2068,7 +2205,7 @@ yyreduce:
                    {
         CONTEXT->ssql->flag=SCF_HELP;//"help";
     }
-#line 1574 "yacc_sql.tab.c"
+#line 1572 "yacc_sql.tab.c"
     break;
 
   case 24:
@@ -2076,7 +2213,7 @@ yyreduce:
                    {
       CONTEXT->ssql->flag = SCF_SYNC;
     }
-#line 1582 "yacc_sql.tab.c"
+#line 1580 "yacc_sql.tab.c"
     break;
 
   case 25:
@@ -2084,7 +2221,7 @@ yyreduce:
                         {
       CONTEXT->ssql->flag = SCF_BEGIN;
     }
-#line 1590 "yacc_sql.tab.c"
+#line 1588 "yacc_sql.tab.c"
     break;
 
   case 26:
@@ -2092,7 +2229,7 @@ yyreduce:
                          {
       CONTEXT->ssql->flag = SCF_COMMIT;
     }
-#line 1598 "yacc_sql.tab.c"
+#line 1596 "yacc_sql.tab.c"
     break;
 
   case 27:
@@ -2100,7 +2237,7 @@ yyreduce:
                            {
       CONTEXT->ssql->flag = SCF_ROLLBACK;
     }
-#line 1606 "yacc_sql.tab.c"
+#line 1604 "yacc_sql.tab.c"
     break;
 
   case 28:
@@ -2112,10 +2249,13 @@ yyreduce:
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1413 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1408 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2136,6 +2276,9 @@ yyreduce:
 =======
 #line 1615 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1613 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 29:
@@ -2143,7 +2286,7 @@ yyreduce:
                           {
       CONTEXT->ssql->flag = SCF_SHOW_TABLES;
     }
-#line 1623 "yacc_sql.tab.c"
+#line 1621 "yacc_sql.tab.c"
     break;
 
   case 30:
@@ -2155,10 +2298,13 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1430 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1425 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2171,6 +2317,9 @@ yyreduce:
 =======
 #line 1632 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1630 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 31:
@@ -2182,10 +2331,13 @@ yyreduce:
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1439 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1434 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2198,6 +2350,9 @@ yyreduce:
 =======
 #line 1641 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1639 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 32:
@@ -2209,10 +2364,13 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1448 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1443 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2225,6 +2383,9 @@ yyreduce:
 =======
 #line 1650 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1648 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 33:
@@ -2236,10 +2397,13 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1457 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1452 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2252,6 +2416,9 @@ yyreduce:
 =======
 #line 1659 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1657 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 34:
@@ -2266,10 +2433,13 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1469 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1464 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2288,12 +2458,15 @@ yyreduce:
 =======
 #line 1671 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1669 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 36:
 #line 252 "yacc_sql.y"
                                    {    }
-#line 1677 "yacc_sql.tab.c"
+#line 1675 "yacc_sql.tab.c"
     break;
 
   case 37:
@@ -2311,10 +2484,13 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1490 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1485 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2327,6 +2503,9 @@ yyreduce:
 =======
 #line 1692 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1690 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 38:
@@ -2344,10 +2523,13 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1505 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1500 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2390,36 +2572,39 @@ yyreduce:
 =======
 #line 1707 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1705 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 39:
 #line 280 "yacc_sql.y"
                        {(yyval.number) = (yyvsp[0].number);}
-#line 1713 "yacc_sql.tab.c"
+#line 1711 "yacc_sql.tab.c"
     break;
 
   case 40:
 #line 283 "yacc_sql.y"
               { (yyval.number)=INTS; }
-#line 1719 "yacc_sql.tab.c"
+#line 1717 "yacc_sql.tab.c"
     break;
 
   case 41:
 #line 284 "yacc_sql.y"
                   { (yyval.number)=CHARS; }
-#line 1725 "yacc_sql.tab.c"
+#line 1723 "yacc_sql.tab.c"
     break;
 
   case 42:
 #line 285 "yacc_sql.y"
                  { (yyval.number)=FLOATS; }
-#line 1731 "yacc_sql.tab.c"
+#line 1729 "yacc_sql.tab.c"
     break;
 
   case 43:
 #line 286 "yacc_sql.y"
                     { (yyval.number)=DATES; }
-#line 1737 "yacc_sql.tab.c"
+#line 1735 "yacc_sql.tab.c"
     break;
 
   case 44:
@@ -2431,10 +2616,13 @@ yyreduce:
 	}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1544 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1539 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2447,6 +2635,9 @@ yyreduce:
 =======
 #line 1746 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1744 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 45:
@@ -2468,10 +2659,13 @@ yyreduce:
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1563 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1558 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2491,13 +2685,16 @@ yyreduce:
 =======
 #line 1765 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1763 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 47:
 #line 316 "yacc_sql.y"
                                 {
     }
-#line 1772 "yacc_sql.tab.c"
+#line 1770 "yacc_sql.tab.c"
     break;
 
   case 48:
@@ -2512,10 +2709,13 @@ yyreduce:
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1582 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1577 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2552,6 +2752,9 @@ yyreduce:
 =======
 #line 1784 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1782 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 50:
@@ -2559,7 +2762,7 @@ yyreduce:
                               { 
   		// CONTEXT->values[CONTEXT->value_length++] = *$2;
 	  }
-#line 1792 "yacc_sql.tab.c"
+#line 1790 "yacc_sql.tab.c"
     break;
 
   case 51:
@@ -2567,7 +2770,7 @@ yyreduce:
           {	
   		value_init_integer(&CONTEXT->values[CONTEXT->value_length++], (yyvsp[0].number));
 		}
-#line 1800 "yacc_sql.tab.c"
+#line 1798 "yacc_sql.tab.c"
     break;
 
   case 52:
@@ -2575,7 +2778,7 @@ yyreduce:
           {
   		value_init_float(&CONTEXT->values[CONTEXT->value_length++], (yyvsp[0].floats));
 		}
-#line 1808 "yacc_sql.tab.c"
+#line 1806 "yacc_sql.tab.c"
     break;
 
   case 53:
@@ -2588,10 +2791,13 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1616 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1611 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2604,6 +2810,9 @@ yyreduce:
 =======
 #line 1818 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1816 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 54:
@@ -2617,10 +2826,13 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1625 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1620 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2637,6 +2849,9 @@ yyreduce:
 >>>>>>> support parsing sub select of update in front-end
 =======
 #line 1829 "yacc_sql.tab.c"
+=======
+#line 1827 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 55:
@@ -2651,10 +2866,13 @@ yyreduce:
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1637 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1632 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2671,6 +2889,9 @@ yyreduce:
 >>>>>>> support parsing sub select of update in front-end
 =======
 #line 1841 "yacc_sql.tab.c"
+=======
+#line 1839 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 56:
@@ -2679,17 +2900,20 @@ yyreduce:
                 {
 			CONTEXT->ssql->flag = SCF_UPDATE;//"update";
 			Value *value = CONTEXT->values;
-			updates_init(&CONTEXT->ssql->sstr.update, (yyvsp[-4].string), value, CONTEXT->value_length,
+			updates_init(&CONTEXT->ssql->sstr.update, (yyvsp[-5].string), value, CONTEXT->value_length,
 					CONTEXT->conditions, CONTEXT->condition_length);
 			CONTEXT->condition_length = 0;
 			CONTEXT->value_length = 0;
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1649 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1644 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2702,30 +2926,33 @@ yyreduce:
 =======
 #line 1854 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1852 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 57:
 #line 380 "yacc_sql.y"
-                        {
+                    {
         updates_append_attribute(&CONTEXT->ssql->sstr.update, (yyvsp[-2].string), CONTEXT->value_length-1);
         printf("one set_stmt:\n");
         printf("%d\n", CONTEXT->value_length);
     }
-#line 1864 "yacc_sql.tab.c"
+#line 1862 "yacc_sql.tab.c"
     break;
 
   case 59:
 #line 389 "yacc_sql.y"
                                {
         }
-#line 1871 "yacc_sql.tab.c"
+#line 1869 "yacc_sql.tab.c"
     break;
 
   case 60:
 #line 394 "yacc_sql.y"
           {
     }
-#line 1878 "yacc_sql.tab.c"
+#line 1876 "yacc_sql.tab.c"
     break;
 
   case 61:
@@ -2739,7 +2966,7 @@ yyreduce:
         ParserContext *child = CONTEXT->child_context;
         value_init_select(&CONTEXT->values[CONTEXT->value_length++], child->ssql);
     }
-#line 1892 "yacc_sql.tab.c"
+#line 1890 "yacc_sql.tab.c"
     break;
 
   case 62:
@@ -2754,13 +2981,13 @@ yyreduce:
                 yyset_extra(child, scanner);
             }
         }
-#line 1907 "yacc_sql.tab.c"
+#line 1905 "yacc_sql.tab.c"
     break;
 
   case 63:
 #line 421 "yacc_sql.y"
                           {}
-#line 1913 "yacc_sql.tab.c"
+#line 1911 "yacc_sql.tab.c"
     break;
 
 <<<<<<< HEAD
@@ -2788,10 +3015,13 @@ yyreduce:
 	}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1669 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1664 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2808,6 +3038,9 @@ yyreduce:
 >>>>>>> support parsing sub select of update in front-end
 =======
 #line 1933 "yacc_sql.tab.c"
+=======
+#line 1931 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 65:
@@ -2820,10 +3053,13 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1679 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1674 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2840,6 +3076,9 @@ yyreduce:
 >>>>>>> support parsing sub select of update in front-end
 =======
 #line 1943 "yacc_sql.tab.c"
+=======
+#line 1941 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 66:
@@ -2852,10 +3091,13 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1689 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1684 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -2872,6 +3114,9 @@ yyreduce:
 >>>>>>> support parsing sub select of update in front-end
 =======
 #line 1953 "yacc_sql.tab.c"
+=======
+#line 1951 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 67:
@@ -2884,10 +3129,13 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1699 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1694 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -3005,6 +3253,9 @@ yyreduce:
 =======
 =======
 #line 1963 "yacc_sql.tab.c"
+=======
+#line 1961 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 69:
@@ -3020,6 +3271,7 @@ yyreduce:
       }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1805 "yacc_sql.tab.c"
     break;
 
@@ -3028,6 +3280,8 @@ yyreduce:
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1790 "yacc_sql.tab.c"
     break;
@@ -3046,6 +3300,9 @@ yyreduce:
 =======
 =======
 #line 1975 "yacc_sql.tab.c"
+=======
+#line 1973 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 70:
@@ -3061,10 +3318,13 @@ yyreduce:
   	  }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1817 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1802 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -3105,6 +3365,9 @@ yyreduce:
 =======
 #line 1987 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 1985 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 72:
@@ -3112,7 +3375,7 @@ yyreduce:
                         {	
 				selects_append_relation(&CONTEXT->ssql->sstr.selection, (yyvsp[-1].string));
 		  }
-#line 1995 "yacc_sql.tab.c"
+#line 1993 "yacc_sql.tab.c"
     break;
 
   case 74:
@@ -3120,7 +3383,7 @@ yyreduce:
                                      {	
 				// CONTEXT->conditions[CONTEXT->condition_length++]=*$2;
 			}
-#line 2003 "yacc_sql.tab.c"
+#line 2001 "yacc_sql.tab.c"
     break;
 
   case 76:
@@ -3128,7 +3391,7 @@ yyreduce:
                                    {
 				// CONTEXT->conditions[CONTEXT->condition_length++]=*$2;
 			}
-#line 2011 "yacc_sql.tab.c"
+#line 2009 "yacc_sql.tab.c"
     break;
 
 <<<<<<< HEAD
@@ -3169,6 +3432,7 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1869 "yacc_sql.tab.c"
     break;
 
@@ -3177,6 +3441,8 @@ yyreduce:
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1854 "yacc_sql.tab.c"
     break;
@@ -3195,6 +3461,9 @@ yyreduce:
 =======
 =======
 #line 2040 "yacc_sql.tab.c"
+=======
+#line 2038 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 78:
@@ -3222,6 +3491,7 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1893 "yacc_sql.tab.c"
     break;
 
@@ -3230,6 +3500,8 @@ yyreduce:
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1878 "yacc_sql.tab.c"
     break;
@@ -3248,6 +3520,9 @@ yyreduce:
 =======
 =======
 #line 2064 "yacc_sql.tab.c"
+=======
+#line 2062 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 79:
@@ -3275,6 +3550,7 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1917 "yacc_sql.tab.c"
     break;
 
@@ -3283,6 +3559,8 @@ yyreduce:
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1902 "yacc_sql.tab.c"
     break;
@@ -3301,6 +3579,9 @@ yyreduce:
 =======
 =======
 #line 2088 "yacc_sql.tab.c"
+=======
+#line 2086 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 80:
@@ -3330,6 +3611,7 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1943 "yacc_sql.tab.c"
     break;
 
@@ -3338,6 +3620,8 @@ yyreduce:
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1928 "yacc_sql.tab.c"
     break;
@@ -3356,6 +3640,9 @@ yyreduce:
 =======
 =======
 #line 2114 "yacc_sql.tab.c"
+=======
+#line 2112 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 81:
@@ -3384,6 +3671,7 @@ yyreduce:
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1968 "yacc_sql.tab.c"
     break;
 
@@ -3392,6 +3680,8 @@ yyreduce:
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1953 "yacc_sql.tab.c"
     break;
@@ -3410,6 +3700,9 @@ yyreduce:
 =======
 =======
 #line 2139 "yacc_sql.tab.c"
+=======
+#line 2137 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 82:
@@ -3438,6 +3731,7 @@ yyreduce:
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 1993 "yacc_sql.tab.c"
     break;
 
@@ -3446,6 +3740,8 @@ yyreduce:
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 1978 "yacc_sql.tab.c"
     break;
@@ -3464,6 +3760,9 @@ yyreduce:
 =======
 =======
 #line 2164 "yacc_sql.tab.c"
+=======
+#line 2162 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 83:
@@ -3490,10 +3789,13 @@ yyreduce:
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 2016 "yacc_sql.tab.c"
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 2001 "yacc_sql.tab.c"
 >>>>>>> support parsing sub select of update in front-end
@@ -3558,54 +3860,57 @@ yyreduce:
 =======
 #line 2187 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+=======
+#line 2185 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
     break;
 
   case 84:
 #line 648 "yacc_sql.y"
              { CONTEXT->comp = EQUAL_TO; }
-#line 2193 "yacc_sql.tab.c"
+#line 2191 "yacc_sql.tab.c"
     break;
 
   case 85:
 #line 649 "yacc_sql.y"
          { CONTEXT->comp = LESS_THAN; }
-#line 2199 "yacc_sql.tab.c"
+#line 2197 "yacc_sql.tab.c"
     break;
 
   case 86:
 #line 650 "yacc_sql.y"
          { CONTEXT->comp = GREAT_THAN; }
-#line 2205 "yacc_sql.tab.c"
+#line 2203 "yacc_sql.tab.c"
     break;
 
   case 87:
 #line 651 "yacc_sql.y"
          { CONTEXT->comp = LESS_EQUAL; }
-#line 2211 "yacc_sql.tab.c"
+#line 2209 "yacc_sql.tab.c"
     break;
 
   case 88:
 #line 652 "yacc_sql.y"
          { CONTEXT->comp = GREAT_EQUAL; }
-#line 2217 "yacc_sql.tab.c"
+#line 2215 "yacc_sql.tab.c"
     break;
 
   case 89:
 #line 653 "yacc_sql.y"
          { CONTEXT->comp = NOT_EQUAL; }
-#line 2223 "yacc_sql.tab.c"
+#line 2221 "yacc_sql.tab.c"
     break;
 
   case 90:
 #line 654 "yacc_sql.y"
            { CONTEXT->comp = LIKE_AS; }
-#line 2229 "yacc_sql.tab.c"
+#line 2227 "yacc_sql.tab.c"
     break;
 
   case 91:
 #line 655 "yacc_sql.y"
                { CONTEXT->comp = NOT_LIKE; }
-#line 2235 "yacc_sql.tab.c"
+#line 2233 "yacc_sql.tab.c"
     break;
 
 <<<<<<< HEAD
@@ -3626,6 +3931,7 @@ yyreduce:
 		}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #line 2073 "yacc_sql.tab.c"
     break;
 
@@ -3634,6 +3940,8 @@ yyreduce:
 =======
 =======
 >>>>>>> update without aggregation-func
+=======
+>>>>>>> fix: update syntax
 <<<<<<< HEAD
 #line 2058 "yacc_sql.tab.c"
     break;
@@ -3657,7 +3965,17 @@ yyreduce:
 
 #line 2248 "yacc_sql.tab.c"
 >>>>>>> update without aggregation-func
+<<<<<<< HEAD
 >>>>>>> update without aggregation-func
+=======
+=======
+#line 2242 "yacc_sql.tab.c"
+    break;
+
+
+#line 2246 "yacc_sql.tab.c"
+>>>>>>> fix: update syntax
+>>>>>>> fix: update syntax
 
       default: break;
     }

@@ -372,7 +372,7 @@ delete:		/*  delete 语句的语法解析树*/
 
 update:			/*  update 语句的语法解析树*/
     //UPDATE ID set_stmt where SEMICOLON
-    UPDATE ID set_stmt set_stmts where SEMICOLON
+    UPDATE ID SET set_stmt set_stmts where SEMICOLON
 		{
 			CONTEXT->ssql->flag = SCF_UPDATE;//"update";
 			Value *value = CONTEXT->values;
@@ -384,8 +384,8 @@ update:			/*  update 语句的语法解析树*/
     ;
 
 set_stmt:
-    SET ID EQ set_value {
-        updates_append_attribute(&CONTEXT->ssql->sstr.update, $2, CONTEXT->value_length-1);
+    ID EQ set_value {
+        updates_append_attribute(&CONTEXT->ssql->sstr.update, $1, CONTEXT->value_length-1);
         printf("one set_stmt:\n");
         printf("%d\n", CONTEXT->value_length);
     }
