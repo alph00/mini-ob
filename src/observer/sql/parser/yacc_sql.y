@@ -344,11 +344,11 @@ value:
     |FLOAT{
   		value_init_float(&CONTEXT->values[CONTEXT->value_length++], $1);
 		}
-	/*|DATE_STR{
+	|DATE_STR{
 			$1 = substr($1,1,strlen($1)-2);
 		if(value_init_date(&CONTEXT->values[CONTEXT->value_length++], $1)==-1)
 		yyerror(scanner,"qfs");
-		}*/
+		}
     |SSS {
 			$1 = substr($1,1,strlen($1)-2);
   		value_init_string(&CONTEXT->values[CONTEXT->value_length++], $1);

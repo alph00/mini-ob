@@ -29,10 +29,7 @@ public:
   RC close() override;
 
   Tuple **current_tuple() override;
-  int tuplesNum() override
-  {
-    return 0;
-  }
+  int tuplesNum() override;
 
 private:
   const Table *table_ = nullptr;

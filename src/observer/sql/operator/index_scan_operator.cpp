@@ -27,7 +27,10 @@ IndexScanOperator::IndexScanOperator(const Table *table, Index *index, const Tup
     right_cell_ = *right_cell;
   }
 }
-
+int IndexScanOperator::tuplesNum()
+{
+  return sizeof(tuples_);
+}
 RC IndexScanOperator::open()
 {
   if (nullptr == table_ || nullptr == index_) {
