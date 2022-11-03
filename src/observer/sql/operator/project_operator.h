@@ -14,8 +14,10 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include "sql/expr/tuple.h"
 #include "sql/operator/operator.h"
 #include "rc.h"
+#include <vector>
 
 class ProjectOperator : public Operator {
 public:
@@ -24,21 +26,27 @@ public:
 
   virtual ~ProjectOperator() = default;
 
-  void add_projection(const Table *table, const FieldMeta *field, const bool isAggrefunc, const Aggrefunc *func);
+  void add_projection(
+      const Table *table, const FieldMeta *field, const bool isAggrefunc, const Aggrefunc *func, int i = 0);
 
   RC open() override;
   RC next() override;
   RC close() override;
 
-  int tuple_cell_num() const
+  int tuple_cell_num(int i = 0) const
   {
-    return tuple_.cell_num();
+    return ((ProjectTuple *)tuples_[i])->cell_num();
   }
 
-  RC tuple_cell_spec_at(int index, const TupleCellSpec *&spec) const;
+  RC tuple_cell_spec_at(int index, const TupleCellSpec *&spec, int i = 0) const;
 
-  Tuple *current_tuple() override;
+  Tuple **current_tuple() override;
+  int tuplesNum() override;
 
 private:
-  ProjectTuple tuple_;
+  // ProjectTuple *tuples_ = nullptr;
+  Tuple **tuples_ = nullptr;
+  // char *alias = nullptr;
+  std::vector<char *> alias;
+  int table_sum = 0;
 };

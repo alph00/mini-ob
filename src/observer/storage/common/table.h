@@ -16,6 +16,8 @@ See the Mulan PSL v2 for more details. */
 #define __OBSERVER_STORAGE_COMMON_TABLE_H__
 
 #include "storage/common/table_meta.h"
+#include <string>
+#include <map>
 
 struct RID;
 class Record;
@@ -47,9 +49,9 @@ public:
    */
   RC create(const char *path, const char *name, const char *base_dir, int attribute_count, const AttrInfo attributes[],
       CLogManager *clog_manager);
-  
+
   RC drop(const char *path);
-  RC show_index_info(std::string& result);
+  RC show_index_info(std::string &result);
   /**
    * 打开一个表
    * @param meta_file 保存表元数据的文件完整路径
@@ -128,5 +130,5 @@ private:
   RecordFileHandler *record_handler_ = nullptr;  /// 记录操作
   std::vector<Index *> indexes_;
 };
-
+extern std::map<std::string, int> table_n2id;
 #endif  // __OBSERVER_STORAGE_COMMON_TABLE_H__

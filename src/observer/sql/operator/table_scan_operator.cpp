@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details. */
 //
 
 #include "sql/operator/table_scan_operator.h"
+#include "sql/expr/tuple.h"
 #include "storage/common/table.h"
 #include "rc.h"
 
@@ -39,11 +40,15 @@ RC TableScanOperator::close()
 {
   return record_scanner_.close_scan();
 }
-
-Tuple * TableScanOperator::current_tuple()
+int TableScanOperator::tuplesNum()
+{
+  return sizeof(tuples_);
+}
+Tuple **TableScanOperator::current_tuple()
 {
   tuple_.set_record(&current_record_);
-  return &tuple_;
+  tuples_[0] = &tuple_;
+  return (Tuple **)tuples_;
 }
 // RC TableScanOperator::tuple_cell_spec_at(int index, TupleCellSpec &spec) const
 // {

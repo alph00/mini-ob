@@ -14,17 +14,17 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include "sql/expr/tuple.h"
 #include "sql/operator/operator.h"
 #include "storage/record/record_manager.h"
 #include "rc.h"
+#include <cstdlib>
 
 class Table;
 
-class TableScanOperator : public Operator
-{
+class TableScanOperator : public Operator {
 public:
-  TableScanOperator(Table *table)
-    : table_(table)
+  TableScanOperator(Table *table) : table_(table)
   {}
 
   virtual ~TableScanOperator() = default;
@@ -33,7 +33,8 @@ public:
   RC next() override;
   RC close() override;
 
-  Tuple * current_tuple() override;
+  Tuple **current_tuple() override;
+  int tuplesNum() override;
 
   // int tuple_cell_num() const override
   // {
@@ -46,4 +47,5 @@ private:
   RecordFileScanner record_scanner_;
   Record current_record_;
   RowTuple tuple_;
+  RowTuple *tuples_[1];
 };

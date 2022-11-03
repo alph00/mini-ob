@@ -14,25 +14,37 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include "sql/expr/tuple.h"
 #include "sql/parser/parse.h"
 #include "sql/operator/operator.h"
 #include "rc.h"
+#include <vector>
 
 // TODO fixme
-class JoinOperator : public Operator
-{
+class JoinOperator : public Operator {
 public:
-  JoinOperator(Operator *left, Operator *right)
+  JoinOperator() = default;
+  JoinOperator(Operator *left, Operator *right) : left_(left), right_(right)
   {}
+  void set_lr(Operator *left, Operator *right)
+  {
+    left_ = left;
+    right_ = right;
+  }
 
   virtual ~JoinOperator() = default;
 
   RC open() override;
   RC next() override;
   RC close() override;
+  Tuple **current_tuple() override;
+  int tuplesNum() override;
 
 private:
   Operator *left_ = nullptr;
   Operator *right_ = nullptr;
   bool round_done_ = true;
+  RowTuple *current_tuple_;
+  int table_num = 0;
+  RowTuple **tuples_ = nullptr;
 };

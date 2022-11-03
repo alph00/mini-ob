@@ -29,6 +29,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/index/bplus_tree_index.h"
 #include "storage/trx/trx.h"
 #include "storage/clog/clog.h"
+std::map<std::string, int> table_n2id;
 
 Table::~Table()
 {
@@ -346,9 +347,9 @@ RC Table::insert_records(Trx *trx, Record *records, size_t record_num)
         rc2 = record_handler_->delete_record(&records[i].rid());
         if (rc2 != RC::SUCCESS) {
           LOG_ERROR("Failed to rollback record data when insert record failed. table name=%s, rc=%d:%s",
-                    name(),
-                    rc2,
-                    strrc(rc2));
+              name(),
+              rc2,
+              strrc(rc2));
         }
       }
       return rc;
@@ -365,10 +366,11 @@ RC Table::insert_records(Trx *trx, Record *records, size_t record_num)
         for (size_t j = 0; j < i; j++) {
           rc2 = rollback_insert(trx, records[j].rid());
           if (rc2 != RC::SUCCESS) {
-            LOG_ERROR("Failed to rollback record data when log operation(insertion) to trx failed. table name=%s, rc=%d:%s",
-                      name(),
-                      rc2,
-                      strrc(rc2));
+            LOG_ERROR(
+                "Failed to rollback record data when log operation(insertion) to trx failed. table name=%s, rc=%d:%s",
+                name(),
+                rc2,
+                strrc(rc2));
           }
         }
         return rc;
@@ -384,16 +386,16 @@ RC Table::insert_records(Trx *trx, Record *records, size_t record_num)
         RC rc2 = delete_entry_of_indexes(record.data(), record.rid(), true);
         if (rc2 != RC::SUCCESS) {
           LOG_ERROR("Failed to rollback index data when insert index entries failed. table name=%s, rc=%d:%s",
-                    name(),
-                    rc2,
-                    strrc(rc2));
+              name(),
+              rc2,
+              strrc(rc2));
         }
         rc2 = record_handler_->delete_record(&record.rid());
         if (rc2 != RC::SUCCESS) {
           LOG_PANIC("Failed to rollback record data when insert index entries failed. table name=%s, rc=%d:%s",
-                    name(),
-                    rc2,
-                    strrc(rc2));
+              name(),
+              rc2,
+              strrc(rc2));
         }
         return rc;
       }
@@ -456,13 +458,23 @@ RC Table::insert_record(Trx *trx, int value_num, const Value *values)
 RC Table::insert_record(Trx *trx, size_t values_num, const Values *values_array, const size_t *value_nums)
 {
   if (values_num <= 0 || nullptr == values_array || nullptr == value_nums) {
-    LOG_ERROR("Invalid argument. table name: %s, values num=%d, values_array=%p, value_nums=%p", name(), values_num, values_array, value_nums);
+    LOG_ERROR("Invalid argument. table name: %s, values num=%d, values_array=%p, value_nums=%p",
+        name(),
+        values_num,
+        values_array,
+        value_nums);
     return RC::INVALID_ARGUMENT;
   }
 
   for (size_t i = 0; i < values_num; i++) {
     if (value_nums[i] <= 0) {
-      LOG_ERROR("Invalid argument. table name: %s, values num=%d, values_array=%p, value_nums=%p, %dth_value_num=", name(), values_num, values_array, value_nums, i, value_nums[i]);
+      LOG_ERROR("Invalid argument. table name: %s, values num=%d, values_array=%p, value_nums=%p, %dth_value_num=",
+          name(),
+          values_num,
+          values_array,
+          value_nums,
+          i,
+          value_nums[i]);
       return RC::INVALID_ARGUMENT;
     }
   }

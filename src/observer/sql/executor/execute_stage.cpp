@@ -16,8 +16,11 @@ See the Mulan PSL v2 for more details. */
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
+#include <map>
 #include <string>
 #include <sstream>
+#include <unordered_map>
 
 #include "execute_stage.h"
 
@@ -31,6 +34,8 @@ See the Mulan PSL v2 for more details. */
 #include "event/sql_event.h"
 #include "event/session_event.h"
 #include "sql/expr/tuple.h"
+#include "sql/operator/join_operator.h"
+#include "sql/operator/operator.h"
 #include "sql/operator/table_scan_operator.h"
 #include "sql/operator/index_scan_operator.h"
 #include "sql/operator/predicate_operator.h"
@@ -240,43 +245,56 @@ void end_trx_if_need(Session *session, Trx *trx, bool all_right)
   }
 }
 
-void print_tuple_header(std::ostream &os, const ProjectOperator &oper)
+void print_tuple_header(std::ostream &os, const ProjectOperator &oper, int num = 1)
 {
-  const int cell_num = oper.tuple_cell_num();
-  const TupleCellSpec *cell_spec = nullptr;
-  for (int i = 0; i < cell_num; i++) {
-    oper.tuple_cell_spec_at(i, cell_spec);
-    if (i != 0) {
-      os << " | ";
+  bool enter = false;
+  bool start = false;
+  for (int j = 0; j < num; ++j) {
+    const int cell_num = oper.tuple_cell_num(j);
+    const TupleCellSpec *cell_spec = nullptr;
+    for (int i = 0; i < cell_num; i++) {
+      oper.tuple_cell_spec_at(i, cell_spec, j);
+      if (start) {
+        os << " | ";
+      } else {
+        start = true;
+      }
+
+      if (cell_spec->alias()) {
+        os << cell_spec->alias();
+      }
     }
 
-    if (cell_spec->alias()) {
-      os << cell_spec->alias();
+    if (cell_num > 0) {
+      enter = true;
     }
   }
-
-  if (cell_num > 0) {
+  if (enter) {
     os << '\n';
   }
 }
-void tuple_to_string(std::ostream &os, const Tuple &tuple)
+void tuple_to_string(std::ostream &os, Tuple **tuples_, int num)
 {
   TupleCell cell;
   RC rc = RC::SUCCESS;
   bool first_field = true;
-  for (int i = 0; i < tuple.cell_num(); i++) {
-    rc = tuple.cell_at(i, cell);
-    if (rc != RC::SUCCESS) {
-      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", i, strrc(rc));
-      break;
-    }
+  Tuple *tuple;
+  for (int j = 0; j < num; ++j) {
+    tuple = tuples_[j];
+    for (int i = 0; i < tuple->cell_num(); i++) {
+      rc = tuple->cell_at(i, cell);
+      if (rc != RC::SUCCESS) {
+        LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", i, strrc(rc));
+        break;
+      }
 
-    if (!first_field) {
-      os << " | ";
-    } else {
-      first_field = false;
+      if (!first_field) {
+        os << " | ";
+      } else {
+        first_field = false;
+      }
+      cell.to_string(os);
     }
-    cell.to_string(os);
   }
 }
 
@@ -368,7 +386,7 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt)
   bool left_inclusive = false;
   bool right_inclusive = false;
 
-  switch (comp) {
+  switch (comp) {  // 这些是区间边界
     case EQUAL_TO: {
       left_cell = &value;
       right_cell = &value;
@@ -648,40 +666,53 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   SelectStmt *select_stmt = (SelectStmt *)(sql_event->stmt());
   SessionEvent *session_event = sql_event->session_event();
   RC rc = RC::SUCCESS;
-  if (select_stmt->tables().size() != 1) {
-    LOG_WARN("select more than 1 tables is not supported");
-    rc = RC::UNIMPLENMENT;
-    return rc;
+  for (size_t i = 0; i < select_stmt->tables().size(); ++i) {
+    std::string str = select_stmt->tables()[i]->table_meta().name();
+    table_n2id[str] = select_stmt->tables().size() - i - 1;
   }
 
-  Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt());
-  if (nullptr == scan_oper) {
-    scan_oper = new TableScanOperator(select_stmt->tables()[0]);
-  }
-
-  DEFER([&]() { delete scan_oper; });
-
+  // DEFER([&]() { delete[] scan_oper; });
+  Operator *scan_oper[select_stmt->tables().size()];
+  Operator *join_oper[select_stmt->tables().size()];
   PredicateOperator pred_oper(select_stmt->filter_stmt());
-  pred_oper.add_child(scan_oper);
+  if (select_stmt->tables().size() > 1) {
+    // 多表查询目前不考虑索引
+    for (size_t i = 0; i < select_stmt->tables().size(); ++i) {
+      scan_oper[i] = new TableScanOperator(select_stmt->tables()[select_stmt->tables().size() - 1 - i]);
+    }
+    join_oper[0] = new JoinOperator(scan_oper[0], scan_oper[1]);
+    for (size_t i = 1; i < select_stmt->tables().size() - 1; ++i) {
+      join_oper[i] = new JoinOperator(join_oper[i - 1], scan_oper[i + 1]);
+    }
+    pred_oper.add_child(join_oper[select_stmt->tables().size() - 2]);
+  } else {  // 单表
+    scan_oper[0] = try_to_create_index_scan_operator(select_stmt->filter_stmt());
+    if (nullptr == scan_oper[0]) {
+      scan_oper[0] = new TableScanOperator(select_stmt->tables()[0]);
+    }
+    pred_oper.add_child(scan_oper[0]);
+  }
   ProjectOperator project_oper;
   project_oper.add_child(&pred_oper);
-  for (const Field &field : select_stmt->query_fields()) {
-    project_oper.add_projection(field.table(), field.meta(), field.isAggrefunc(), field.aggrefunc());
-  }
   rc = project_oper.open();
+  for (const Field &field : select_stmt->query_fields()) {
+    project_oper.add_projection(
+        field.table(), field.meta(), field.isAggrefunc(), field.aggrefunc(), table_n2id[field.table()->name()]);
+  }
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to open operator");
     return rc;
   }
 
   // 目前认为普通查询和聚合函数不能同时存在
+  // 目前聚合函数不能多表查询
   // 先不考虑sum(2)这种
   std::stringstream ss;
-  if (select_stmt->query_fields()[0].isAggrefunc() == true) {
+  if (select_stmt->query_fields()[0].isAggrefunc() == true) {  // to do qfs
     print_Aggrefunc_header(ss, project_oper, select_stmt->query_fields().size());
     AggrefuncPara para[select_stmt->query_fields().size()];
     while ((rc = project_oper.next()) == RC::SUCCESS) {
-      Tuple *tuple = project_oper.current_tuple();
+      Tuple *tuple = project_oper.current_tuple()[0];
       if (nullptr == tuple) {
         rc = RC::INTERNAL;
         LOG_WARN("failed to get current record. rc=%s", strrc(rc));
@@ -691,18 +722,18 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     }
     AggrefuncPrint(ss, select_stmt->query_fields(), para);
   } else {
-    print_tuple_header(ss, project_oper);
+    print_tuple_header(ss, project_oper, select_stmt->tables().size());
     while ((rc = project_oper.next()) == RC::SUCCESS) {
       // get current record
       // write to response
-      Tuple *tuple = project_oper.current_tuple();
-      if (nullptr == tuple) {
+      Tuple **tuple = project_oper.current_tuple();
+      if (nullptr == tuple || nullptr == tuple[0]) {
         rc = RC::INTERNAL;
         LOG_WARN("failed to get current record. rc=%s", strrc(rc));
         break;
       }
 
-      tuple_to_string(ss, *tuple);
+      tuple_to_string(ss, tuple, project_oper.tuplesNum() / sizeof(Tuple *));
       ss << std::endl;
     }
   }
@@ -714,6 +745,15 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
     rc = project_oper.close();
   }
   session_event->set_response(ss.str());
+  // 资源释放，替代之前的defer
+  for (size_t i = 0; i < select_stmt->tables().size(); ++i) {
+    delete scan_oper[i];
+    if (i != select_stmt->tables().size() - 1) {
+      delete join_oper[i];
+    }
+  }
+  table_n2id.clear();
+  //
   return rc;
 }
 
