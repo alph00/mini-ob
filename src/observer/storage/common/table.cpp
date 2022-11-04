@@ -848,6 +848,10 @@ RC Table::insert_entry_of_indexes(const char *record, const RID &rid)
 {
   RC rc = RC::SUCCESS;
   for (Index *index : indexes_) {
+    int field_num=index->index_meta().fields().size();
+    if(field_num>1){
+      continue;
+    }
     rc = index->insert_entry(record, &rid);
     if (rc != RC::SUCCESS) {
       break;
