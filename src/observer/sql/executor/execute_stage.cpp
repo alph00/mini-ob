@@ -1087,67 +1087,67 @@ RC ExecuteStage::do_clog_sync(SQLStageEvent *sql_event)
 RC ExecuteStage::get_value(SelectStmt *select_stmt, Value *value)
 {
   RC rc = RC::SUCCESS;
-  if (select_stmt->tables().size() != 1) {
-    LOG_WARN("select more than 1 tables is not supported");
-    rc = RC::UNIMPLENMENT;
-    return rc;
-  }
-  if (select_stmt->query_fields().size() != 1) {
-    LOG_WARN("select more than 1 field is not allowed");
-    rc = RC::INVALID_ARGUMENT;
-    return rc;
-  }
-
-  Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt());
-  if (nullptr == scan_oper) {
-    scan_oper = new TableScanOperator(select_stmt->tables()[0]);
-  }
-
-  DEFER([&]() { delete scan_oper; });
-
-  PredicateOperator pred_oper(select_stmt->filter_stmt());
-  pred_oper.add_child(scan_oper);
-  ProjectOperator project_oper;
-  project_oper.add_child(&pred_oper);
-  for (const Field &field : select_stmt->query_fields()) {
-    project_oper.add_projection(field.table(), field.meta());
-  }
-  rc = project_oper.open();
-  if (rc != RC::SUCCESS) {
-    LOG_WARN("failed to open operator");
-    return rc;
-  }
-
-
-  size_t record_num = 0;
-  while ((rc = project_oper.next()) == RC::SUCCESS) {
-    if (++record_num > 1) {
-      break;
-    }
-    Tuple *tuple = project_oper.current_tuple();
-    TupleCell cell;
-    rc = tuple->cell_at(0, cell);
-    if (rc != RC::SUCCESS) {
-      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
-      break;
-    }
-
-    rc = cell.get_value(value);
-    if (rc != RC::SUCCESS) {
-      LOG_WARN("failed to transfer field to value, index=%d, rc=%s", 0, strrc(rc));
-      return rc;
-    }
-  }
-
-  if (rc != RC::RECORD_EOF) {
-    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
-    project_oper.close();
-  } else {
-    rc = project_oper.close();
-  }
-
-  if (record_num == 0) {
-    rc = RC::INTERNAL;
-  }
+//  if (select_stmt->tables().size() != 1) {
+//    LOG_WARN("select more than 1 tables is not supported");
+//    rc = RC::UNIMPLENMENT;
+//    return rc;
+//  }
+//  if (select_stmt->query_fields().size() != 1) {
+//    LOG_WARN("select more than 1 field is not allowed");
+//    rc = RC::INVALID_ARGUMENT;
+//    return rc;
+//  }
+//
+//  Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt());
+//  if (nullptr == scan_oper) {
+//    scan_oper = new TableScanOperator(select_stmt->tables()[0]);
+//  }
+//
+//  DEFER([&]() { delete scan_oper; });
+//
+//  PredicateOperator pred_oper(select_stmt->filter_stmt());
+//  pred_oper.add_child(scan_oper);
+//  ProjectOperator project_oper;
+//  project_oper.add_child(&pred_oper);
+//  for (const Field &field : select_stmt->query_fields()) {
+//    project_oper.add_projection(field.table(), field.meta());
+//  }
+//  rc = project_oper.open();
+//  if (rc != RC::SUCCESS) {
+//    LOG_WARN("failed to open operator");
+//    return rc;
+//  }
+//
+//
+//  size_t record_num = 0;
+//  while ((rc = project_oper.next()) == RC::SUCCESS) {
+//    if (++record_num > 1) {
+//      break;
+//    }
+//    Tuple *tuple = project_oper.current_tuple();
+//    TupleCell cell;
+//    rc = tuple->cell_at(0, cell);
+//    if (rc != RC::SUCCESS) {
+//      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+//      break;
+//    }
+//
+//    rc = cell.get_value(value);
+//    if (rc != RC::SUCCESS) {
+//      LOG_WARN("failed to transfer field to value, index=%d, rc=%s", 0, strrc(rc));
+//      return rc;
+//    }
+//  }
+//
+//  if (rc != RC::RECORD_EOF) {
+//    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+//    project_oper.close();
+//  } else {
+//    rc = project_oper.close();
+//  }
+//
+//  if (record_num == 0) {
+//    rc = RC::INTERNAL;
+//  }
   return rc;
 }
