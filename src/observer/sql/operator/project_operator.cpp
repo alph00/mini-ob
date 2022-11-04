@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/log/log.h"
 #include "sql/expr/tuple.h"
 #include "sql/operator/project_operator.h"
+#include "sql/parser/parse_defs.h"
 #include "storage/record/record.h"
 #include "storage/common/table.h"
 #include <cstddef>
@@ -54,7 +55,7 @@ RC ProjectOperator::next()
 RC ProjectOperator::close()
 {
   for (size_t i = 0; i < table_sum; ++i) {
-    free(tuples_[i]);
+    delete (tuples_[i]);
   }
   free(tuples_);
   tuples_ = nullptr;
@@ -118,11 +119,12 @@ void ProjectOperator::add_projection(
     spec->set_alias(header);
   } else {
     if (table_n2id.size() > 1) {  // 因为不会出现x.x和x同时存在//此时为多表
-      char *str = strdup(table->name());
-      strcat(str, ".");
-      strcat(str, field_meta->name());
-      spec->set_alias(str);
-      alias.emplace_back(str);
+      char *header = (char *)malloc(MAX_REL_NAME + MAX_ATTR_NAME + 11);
+      strcpy(header, table->name());
+      strcat(header, ".");
+      strcat(header, field_meta->name());
+      spec->set_alias(header);
+      alias.emplace_back(header);
     } else {  // 此时为单表
       spec->set_alias(field_meta->name());
     }

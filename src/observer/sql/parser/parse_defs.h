@@ -37,8 +37,8 @@ typedef enum {
   LESS_THAN,    //"<"       3
   GREAT_EQUAL,  //">="      4
   GREAT_THAN,   //">"       5
-  LIKE_AS,      //like      6
-  NOT_LIKE,     //not like  7
+  LIKE_AS,      // like      6
+  NOT_LIKE,     // not like  7
   NO_OP
 } CompOp;
 
@@ -95,21 +95,23 @@ typedef struct _Aggrefunc {
 
 // struct of select
 typedef struct {
-  size_t attr_num;                // Length of attrs in Select clause
-  RelAttr attributes[MAX_NUM];    // attrs in Select clause
-  size_t relation_num;            // Length of relations in Fro clause
-  char *relations[MAX_NUM];       // relations in From clause
-  size_t condition_num;           // Length of conditions in Where clause
-  Condition conditions[MAX_NUM];  // conditions in Where clause
-  size_t aggrefunc_num;           // Length of aggregation functions in Select clause
-  Aggrefunc aggrefuncs[MAX_NUM];  // aggregation functions in Select clause
+  size_t attr_num;                     // Length of attrs in Select clause
+  RelAttr attributes[MAX_NUM];         // attrs in Select clause
+  size_t relation_num;                 // Length of relations in Fro clause
+  char *relations[MAX_NUM];            // relations in From clause
+  size_t condition_num;                // Length of conditions in Where clause
+  Condition conditions[MAX_NUM];       // conditions in Where clause
+  size_t aggrefunc_num;                // Length of aggregation functions in Select clause
+  Aggrefunc aggrefuncs[MAX_NUM];       // aggregation functions in Select clause
+  size_t join_condition_num;           // Length of join conditions in on clause
+  Condition join_conditions[MAX_NUM];  // join conditions in on clause
 } Selects;
 
 // struct of insert
 typedef struct {
-  char *relation_name;    // Relation to insert into
-  size_t values_num;           // Length of [(xx,xx), (xx,xx), (xx,xx)]
-  size_t value_nums[MAX_RECORD_NUM];  // Length of every (xx,xx,xx)
+  char *relation_name;                  // Relation to insert into
+  size_t values_num;                    // Length of [(xx,xx), (xx,xx), (xx,xx)]
+  size_t value_nums[MAX_RECORD_NUM];    // Length of every (xx,xx,xx)
   Values values_array[MAX_RECORD_NUM];  // [(xx,xx), (xx,xx)] to insert
 } Inserts;
 
@@ -244,19 +246,21 @@ void attr_info_destroy(AttrInfo *attr_info);
 void selects_init(Selects *selects, ...);
 void selects_append_attribute(Selects *selects, RelAttr *rel_attr);
 void selects_append_relation(Selects *selects, const char *relation_name);
+void selects_append_join_conditions(Selects *selects, Condition join_conditions[], size_t join_condition_num);
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num);
 void selects_append_aggrefuncs(Selects *selects, Aggrefunc *func);
 void selects_destroy(Selects *selects);
 
-void inserts_init(Inserts *inserts, const char *relation_name, Values values_array[], size_t value_num_array[], size_t values_num);
+void inserts_init(
+    Inserts *inserts, const char *relation_name, Values values_array[], size_t value_num_array[], size_t values_num);
 void inserts_destroy(Inserts *inserts);
 
 void deletes_init_relation(Deletes *deletes, const char *relation_name);
 void deletes_set_conditions(Deletes *deletes, Condition conditions[], size_t condition_num);
 void deletes_destroy(Deletes *deletes);
 
-void updates_init(Updates *updates, const char *relation_name, Value value[], size_t value_num,
-    Condition conditions[], size_t condition_num);
+void updates_init(Updates *updates, const char *relation_name, Value value[], size_t value_num, Condition conditions[],
+    size_t condition_num);
 void updates_append_attribute(Updates *updates, const char *attr_name, size_t attr_num);
 void updates_destroy(Updates *updates);
 

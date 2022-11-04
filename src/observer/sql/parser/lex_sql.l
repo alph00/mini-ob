@@ -44,6 +44,8 @@ QUOTE            [\'\"]
 [Mm][Aa][Xx]                                         RETURN_TOKEN(MAX_F);
 [Mm][Ii][Nn]                                         RETURN_TOKEN(MIN_F);
 [Ss][Uu][Mm]                                         RETURN_TOKEN(SUM_F);
+[Jj][Oo][Ii][Nn]                                     RETURN_TOKEN(JOIN);
+[Ii][Nn][Nn][Ee][Rr]                                 RETURN_TOKEN(INNER);                                         
 ";"                                                  RETURN_TOKEN(SEMICOLON);
 {DOT}                                                RETURN_TOKEN(DOT);
 "*"                                                  RETURN_TOKEN(STAR);

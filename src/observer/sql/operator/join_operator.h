@@ -18,13 +18,15 @@ See the Mulan PSL v2 for more details. */
 #include "sql/parser/parse.h"
 #include "sql/operator/operator.h"
 #include "rc.h"
+#include "sql/stmt/filter_stmt.h"
 #include <vector>
 
 // TODO fixme
 class JoinOperator : public Operator {
 public:
   JoinOperator() = default;
-  JoinOperator(Operator *left, Operator *right) : left_(left), right_(right)
+  JoinOperator(Operator *left, Operator *right, FilterStmt *join_filter_stmt)
+      : left_(left), right_(right), join_filter_stmt_(join_filter_stmt)
   {}
   void set_lr(Operator *left, Operator *right)
   {
@@ -39,6 +41,7 @@ public:
   RC close() override;
   Tuple **current_tuple() override;
   int tuplesNum() override;
+  bool join_predicate(RowTuple **tuples_);
 
 private:
   Operator *left_ = nullptr;
@@ -47,4 +50,6 @@ private:
   RowTuple *current_tuple_;
   int table_num = 0;
   RowTuple **tuples_ = nullptr;
+  FilterStmt *join_filter_stmt_ = nullptr;
+  bool start = true;
 };
