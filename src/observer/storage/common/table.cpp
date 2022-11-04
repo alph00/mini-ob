@@ -577,6 +577,10 @@ public:
 
   RC insert_index(const Record *record)
   {
+    int field_num=index_->index_meta().fields().size();
+    if(field_num>1){
+      return RC::SUCCESS;
+    }
     return index_->insert_entry(record->data(), &record->rid());
   }
 
@@ -971,6 +975,7 @@ IndexScanner *Table::find_index_for_scan(const DefaultConditionFilter &filter)
     left_len = left_key != nullptr ? strlen(left_key) : 0;
     right_len = right_key != nullptr ? strlen(right_key) : 0;
   }
+  
   return index->create_scanner(left_key, left_len, left_inclusive, right_key, right_len, right_inclusive);
 }
 
@@ -996,6 +1001,7 @@ IndexScanner *Table::find_index_for_scan(const ConditionFilter *filter)
       }
     }
   }
+  
   return nullptr;
 }
 

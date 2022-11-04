@@ -301,6 +301,10 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt)
     const Field &field = left_field_expr.field();
     const Table *table = field.table();
     Index *index = table->find_index_by_field(field.field_name());
+    // int field_num=index->index_meta().fields().size();
+    // if(field_num>1){
+    //   return nullptr;
+    // }
     if (index != nullptr) {
       if (better_filter == nullptr) {
         better_filter = filter_unit;
@@ -339,7 +343,10 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt)
   const Table *table = field.table();
   Index *index = table->find_index_by_field(field.field_name());
   assert(index != nullptr);
-
+  // int field_num=index->index_meta().fields().size();
+  // if(field_num>1){
+  //   return nullptr;
+  // }
   ValueExpr &right_value_expr = *(ValueExpr *)right;
   TupleCell value;
   right_value_expr.get_tuple_cell(value);
@@ -409,6 +416,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   }
 
   Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt());
+  scan_oper=nullptr;
   if (nullptr == scan_oper) {
     scan_oper = new TableScanOperator(select_stmt->tables()[0]);
   }
