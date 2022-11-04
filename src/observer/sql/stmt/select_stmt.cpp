@@ -22,6 +22,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/common/table.h"
 #include <cstddef>
 #include <cstring>
+#include <vector>
 
 SelectStmt::~SelectStmt()
 {
@@ -206,11 +207,21 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
     return rc;
   }
 
+  // create join filter statement in `on` statement
+  FilterStmt *join_filter_stmt = nullptr;
+  RC rc1 = FilterStmt::create(
+      db, default_table, &table_map, select_sql.join_conditions, select_sql.join_condition_num, join_filter_stmt);
+  if (rc1 != RC::SUCCESS) {
+    LOG_WARN("cannot construct join filter stmt");
+    return rc1;
+  }
+
   // everything alright
   SelectStmt *select_stmt = new SelectStmt();
   select_stmt->tables_.swap(tables);
   select_stmt->query_fields_.swap(query_fields);
   select_stmt->filter_stmt_ = filter_stmt;
+  select_stmt->join_filter_stmt_ = join_filter_stmt;
   stmt = select_stmt;
   return RC::SUCCESS;
 }

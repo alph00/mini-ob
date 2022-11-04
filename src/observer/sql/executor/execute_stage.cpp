@@ -768,9 +768,9 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event, std::vector<Value *> *value
     for (size_t i = 0; i < select_stmt->tables().size(); ++i) {
       scan_oper[i] = new TableScanOperator(select_stmt->tables()[select_stmt->tables().size() - 1 - i]);
     }
-    join_oper[0] = new JoinOperator(scan_oper[0], scan_oper[1]);
+    join_oper[0] = new JoinOperator(scan_oper[0], scan_oper[1], select_stmt->join_filter_stmt());
     for (size_t i = 1; i < select_stmt->tables().size() - 1; ++i) {
-      join_oper[i] = new JoinOperator(join_oper[i - 1], scan_oper[i + 1]);
+      join_oper[i] = new JoinOperator(join_oper[i - 1], scan_oper[i + 1], select_stmt->join_filter_stmt());
     }
     pred_oper.add_child(join_oper[select_stmt->tables().size() - 2]);
   } else {  // 单表

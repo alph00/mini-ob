@@ -171,6 +171,15 @@ void selects_append_relation(Selects *selects, const char *relation_name)
   selects->relations[selects->relation_num++] = strdup(relation_name);
 }
 
+void selects_append_join_conditions(Selects *selects, Condition join_conditions[], size_t join_condition_num)
+{
+  assert(join_condition_num <= sizeof(selects->join_conditions) / sizeof(selects->join_conditions[0]));
+  for (size_t i = 0; i < join_condition_num; i++) {
+    selects->join_conditions[i] = join_conditions[i];
+  }
+  selects->join_condition_num = join_condition_num;
+}
+
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num)
 {
   assert(condition_num <= sizeof(selects->conditions) / sizeof(selects->conditions[0]));
@@ -218,7 +227,8 @@ void show_index_destroy(ShowIndex *show_index)
   free((char *)show_index->relation_name);
   show_index->relation_name = nullptr;
 }
-void inserts_init(Inserts *inserts, const char *relation_name, Values values_array[], size_t value_num_array[], size_t values_num)
+void inserts_init(
+    Inserts *inserts, const char *relation_name, Values values_array[], size_t value_num_array[], size_t values_num)
 {
   for (size_t i = 0; i < values_num; i++) {
     assert(value_num_array[i] <= sizeof(inserts->values_array[i]) / sizeof(inserts->values_array[i][0]));
@@ -271,8 +281,8 @@ void deletes_destroy(Deletes *deletes)
   deletes->relation_name = nullptr;
 }
 
-void updates_init(Updates *updates, const char *relation_name, Value value[], size_t value_num,
-    Condition conditions[], size_t condition_num)
+void updates_init(Updates *updates, const char *relation_name, Value value[], size_t value_num, Condition conditions[],
+    size_t condition_num)
 {
   updates->relation_name = strdup(relation_name);
 

@@ -14,6 +14,7 @@ typedef struct ParserContext {
   Query * ssql;
   size_t select_length;
   size_t condition_length;
+  size_t join_condition_length;
   size_t from_length;
   size_t value_length;
   size_t values_length;
@@ -21,6 +22,7 @@ typedef struct ParserContext {
   Values values_array[MAX_RECORD_NUM];
   Value values[MAX_NUM];
   Condition conditions[MAX_NUM];
+  Condition join_conditions[MAX_NUM];
   CompOp comp;
   char id[MAX_NUM];
   struct ParserContext *parent_context;
@@ -115,6 +117,8 @@ ParserContext *get_context(yyscan_t scanner)
 		MAX_F
 		MIN_F
 		SUM_F
+		JOIN
+		INNER
 
 %union {
   struct _Attr *attr;
@@ -426,7 +430,7 @@ select:				/*  select 语句的语法解析树*/
     ;
 
 select_stmt:
-    SELECT select_attr FROM ID rel_list where
+    SELECT select_attr FROM ID rel_list join_lists where
 		{
 			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$4;
 			selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
@@ -441,9 +445,105 @@ select_stmt:
 			CONTEXT->from_length=0;
 			CONTEXT->select_length=0;
 			CONTEXT->value_length = 0;
+			CONTEXT->join_condition_length=0;
 	}
 	;
+join_lists:
+	/* empty */
+	| INNER JOIN ID join_filter join_lists {
+			selects_append_relation(&CONTEXT->ssql->sstr.selection, $3);
+		}
+	;
+join_filter:
+	/* empty */
+	| ON join_condition join_condition_list {
+			selects_append_join_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->join_conditions, CONTEXT->join_condition_length);
+		}
+	;
+join_condition_list:
+    /* empty */
+    | AND join_condition join_condition_list {
+			}
+    ;
+join_condition:
+    ID comOp value 
+		{
+			RelAttr left_attr;
+			relation_attr_init(&left_attr, NULL, $1);
 
+			Value *right_value = &CONTEXT->values[CONTEXT->value_length - 1];
+            if ((CONTEXT->comp == LIKE_AS || CONTEXT->comp == NOT_LIKE) && right_value->type == CHARS) {
+                right_value->type = REGEXP;
+            }
+
+			Condition condition;
+			condition_init(&condition, CONTEXT->comp, 1, &left_attr, NULL, 0, NULL, right_value);
+			CONTEXT->join_conditions[CONTEXT->join_condition_length++] = condition;
+			CONTEXT->value_length--;
+		}
+		|value comOp value 
+		{
+			Value *left_value = &CONTEXT->values[CONTEXT->value_length - 2];
+			Value *right_value = &CONTEXT->values[CONTEXT->value_length - 1];
+
+			Condition condition;
+			condition_init(&condition, CONTEXT->comp, 0, NULL, left_value, 0, NULL, right_value);
+			CONTEXT->join_conditions[CONTEXT->join_condition_length++] = condition;
+		}
+		|ID comOp ID 
+		{
+			RelAttr left_attr;
+			relation_attr_init(&left_attr, NULL, $1);
+			RelAttr right_attr;
+			relation_attr_init(&right_attr, NULL, $3);
+
+			Condition condition;
+			condition_init(&condition, CONTEXT->comp, 1, &left_attr, NULL, 1, &right_attr, NULL);
+			CONTEXT->join_conditions[CONTEXT->join_condition_length++] = condition;
+		}
+    |value comOp ID
+		{
+			Value *left_value = &CONTEXT->values[CONTEXT->value_length - 1];
+			RelAttr right_attr;
+			relation_attr_init(&right_attr, NULL, $3);
+
+			Condition condition;
+			condition_init(&condition, CONTEXT->comp, 0, NULL, left_value, 1, &right_attr, NULL);
+			CONTEXT->join_conditions[CONTEXT->join_condition_length++] = condition;
+		}
+    |ID DOT ID comOp value
+		{
+			RelAttr left_attr;
+			relation_attr_init(&left_attr, $1, $3);
+			Value *right_value = &CONTEXT->values[CONTEXT->value_length - 1];
+
+			Condition condition;
+			condition_init(&condition, CONTEXT->comp, 1, &left_attr, NULL, 0, NULL, right_value);
+			CONTEXT->join_conditions[CONTEXT->join_condition_length++] = condition;
+    }
+    |value comOp ID DOT ID
+		{
+			Value *left_value = &CONTEXT->values[CONTEXT->value_length - 1];
+
+			RelAttr right_attr;
+			relation_attr_init(&right_attr, $3, $5);
+
+			Condition condition;
+			condition_init(&condition, CONTEXT->comp, 0, NULL, left_value, 1, &right_attr, NULL);
+			CONTEXT->join_conditions[CONTEXT->join_condition_length++] = condition;
+    }
+    |ID DOT ID comOp ID DOT ID
+		{
+			RelAttr left_attr;
+			relation_attr_init(&left_attr, $1, $3);
+			RelAttr right_attr;
+			relation_attr_init(&right_attr, $5, $7);
+
+			Condition condition;
+			condition_init(&condition, CONTEXT->comp, 1, &left_attr, NULL, 1, &right_attr, NULL);
+			CONTEXT->join_conditions[CONTEXT->join_condition_length++] = condition;
+    }
+    ;
 select_attr:
     STAR attr_list {
 			RelAttr attr;
