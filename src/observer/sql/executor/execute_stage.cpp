@@ -1110,7 +1110,7 @@ RC ExecuteStage::do_update(SQLStageEvent *sql_event)
 
   rc = update_oper.open();
   if (rc != RC::SUCCESS) {
-    session_event->set_response("FAILURE");
+    session_event->set_response("FAILURE\n");
   } else {
     session_event->set_response("SUCCESS\n");
   }
