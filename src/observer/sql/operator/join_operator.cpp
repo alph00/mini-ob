@@ -27,20 +27,6 @@ RC JoinOperator::open()
   }
   table_num = left_->tuplesNum() + right_->tuplesNum();
   tuples_ = (RowTuple **)malloc(table_num);
-  // bool first = true;
-  // while (RC::SUCCESS == (rc = left_->next())) {
-  //   Tuple *tuple = left_->current_tuple();
-  //   if (nullptr == tuple) {
-  //     rc = RC::INTERNAL;
-  //     LOG_WARN("failed to get tuple from operator");
-  //     break;
-  //   }
-
-  //   RowTuple *tuple_ = new RowTuple;
-  //   tuple_->set_record(&(*(RowTuple *)tuple).record());
-  //   tuple tuples_.emplace_back(tuple_);
-  // }
-
   return rc;
 }
 
@@ -53,7 +39,8 @@ RC JoinOperator::next()
   RC rc = RC::SUCCESS;
   if (start) {
     start = false;
-    if (left_->next() != RC::RECORD_EOF) {
+    RC rc0 = left_->next();
+    if (rc0 == RC::SUCCESS) {
       Tuple **t = left_->current_tuple();
       if (nullptr == t || nullptr == t[0]) {  // 通过t**,和t[0]*代表
         LOG_WARN("failed to get tuple from operator");
@@ -64,7 +51,7 @@ RC JoinOperator::next()
         tuples_[i] = (RowTuple *)t[i];
       }
     } else {
-      return RC::RECORD_EOF;
+      return rc0;
     }
   }
   while (true) {
@@ -77,7 +64,6 @@ RC JoinOperator::next()
         LOG_WARN("failed to get tuple from operator");
         return RC::INTERNAL;
       }
-      // memcpy(tuples_ + left_->tuplesNum(), t, right_->tuplesNum());
       for (size_t i = 0; i < right_->tuplesNum() / (sizeof(Tuple *)); ++i) {
         tuples_[left_->tuplesNum() / (sizeof(Tuple *)) + i] = (RowTuple *)t0[i];
       }
@@ -86,13 +72,12 @@ RC JoinOperator::next()
       }
     } else if (rc2 == RC::RECORD_EOF) {
       rc = left_->next();
-      if (rc != RC::RECORD_EOF) {
+      if (rc == RC::SUCCESS) {
         Tuple **t = left_->current_tuple();
         if (nullptr == t || nullptr == t[0]) {  // 通过t**,和t[0]*代表
           LOG_WARN("failed to get tuple from operator");
           return RC::INTERNAL;
         }
-        // memcpy(tuples_, t, left_->tuplesNum());
         for (size_t i = 0; i < left_->tuplesNum() / (sizeof(Tuple *)); ++i) {
           tuples_[i] = (RowTuple *)t[i];
         }
@@ -116,7 +101,7 @@ RC JoinOperator::next()
           return RC::SUCCESS;
         }
       } else {
-        return RC::RECORD_EOF;
+        return rc;
       }
     } else {
       return rc2;
