@@ -450,9 +450,13 @@ void print_Aggrefunc_header(std::ostream &os, const ProjectOperator &oper, size_
     os << '\n';
   }
 }
-void AggrefuncPrint(std::ostream &os, const std::vector<Field> &query_fields, AggrefuncPara *para)
+void AggrefuncPrint(std::ostream &os, const std::vector<Field> &query_fields, AggrefuncPara *para, std::vector<Value*> *values)
 {
   bool first_field = true;
+  // when values isn't null, query_field.size must be one
+  assert(values == nullptr || ((values != nullptr) && query_fields.size() == 1));
+  Value *value = (Value*) malloc(sizeof(Value));
+
   for (size_t i = 0; i < query_fields.size(); ++i) {
     if (!first_field) {
       os << " | ";
@@ -461,94 +465,172 @@ void AggrefuncPrint(std::ostream &os, const std::vector<Field> &query_fields, Ag
     }
     switch (query_fields[i].aggrefunc()->type) {
       case COUNTS: {
-        os << para[i].count;
+        if (values == nullptr) {
+          os << para[i].count;
+        } else {
+          value_init_integer(value, para[i].count);
+        }
       } break;
       case AVGS: {
         switch (query_fields[i].attr_type()) {
-          case CHARS:
-          case FLOATS:
+          case CHARS: {
+            if (values == nullptr) {
+              os << double2string(para[i].sum / para[i].count);
+            } else {
+              value_init_string(value, double2string(para[i].sum / para[i].count).c_str());
+            }
+          } break;
+          case FLOATS: {
+            if (values == nullptr) {
+              os << double2string(para[i].sum / para[i].count);
+            } else {
+              value_init_float(value, para[i].sum / para[i].count);
+            }
+          } break;
           case INTS: {
-            os << double2string(para[i].sum / para[i].count);
+            if (values == nullptr) {
+              os << double2string(para[i].sum / para[i].count);
+            } else {
+              value_init_integer(value, para[i].sum / para[i].count);
+            }
           } break;
           default: {
-
+            free(value);
+            value = nullptr;
           } break;
         }
       } break;
       case MAXS: {
         switch (query_fields[i].attr_type()) {
           case INTS: {
-            os << para[i].max_i;
+            if (values == nullptr) {
+              os << para[i].max_i;
+            } else {
+              value_init_integer(value, para[i].max_i);
+            }
           } break;
           case FLOATS: {
-            os << double2string(para[i].max_f);
+            if (values == nullptr) {
+              os << double2string(para[i].max_f);
+            } else {
+              value_init_integer(value, para[i].max_f);
+            }
           } break;
           case CHARS: {  // to do qfs ?
-            os << para[i].max_c;
+            if (values == nullptr) {
+              os << para[i].max_c;
+            } else {
+              value_init_string(value, para[i].max_c);
+            }
           } break;
           case DATES: {
-            int value = para[i].max_i;
-            char buf[16] = {0};
-            snprintf(buf,
-                sizeof(buf),
-                "%04d-%02d-%02d",
-                value / 10000,
-                (value % 10000) / 100,
-                value % 100);  // 注意这里月份和天数，不足两位时需要填充0
-            buf[10] = '\0';
-            os << buf;
+            int data = para[i].max_i;
+            if (values == nullptr) {
+              char buf[16] = {0};
+              snprintf(buf,
+                       sizeof(buf),
+                       "%04d-%02d-%02d",
+                       data / 10000,
+                       (data % 10000) / 100,
+                       data % 100);  // 注意这里月份和天数，不足两位时需要填充0
+              buf[10] = '\0';
+              os << buf;
+            } else {
+              value_init_integer(value, data);
+            }
           } break;
           default: {
+            free(value);
+            value = nullptr;
           } break;
         }
       } break;
       case MINS: {
         switch (query_fields[i].attr_type()) {
           case INTS: {
-            os << para[i].min_i;
+            if (values == nullptr) {
+              os << para[i].min_i;
+            } else {
+              value_init_integer(value, para[i].min_i);
+            }
           } break;
           case FLOATS: {
-            os << double2string(para[i].min_f);
+            if (values == nullptr) {
+              os << double2string(para[i].min_f);
+            } else {
+              value_init_float(value, para[i].min_f);
+            }
           } break;
           case CHARS: {
-            os << para[i].min_c;
+            if (values == nullptr) {
+              os << para[i].min_c;
+            } else {
+              value_init_string(value, para[i].min_c);
+            }
           } break;
           case DATES: {
-            int value = para[i].min_i;
-            char buf[16] = {0};
-            snprintf(buf,
-                sizeof(buf),
-                "%04d-%02d-%02d",
-                value / 10000,
-                (value % 10000) / 100,
-                value % 100);  // 注意这里月份和天数，不足两位时需要填充0
-            buf[10] = '\0';
-            os << buf;
+            int data = para[i].min_i;
+            if (values == nullptr) {
+              char buf[16] = {0};
+              snprintf(buf,
+                       sizeof(buf),
+                       "%04d-%02d-%02d",
+                       data / 10000,
+                       (data % 10000) / 100,
+                       data % 100);  // 注意这里月份和天数，不足两位时需要填充0
+              buf[10] = '\0';
+              os << buf;
+            } else {
+              value_init_integer(value, data);
+            }
           } break;
           default: {
+            free(value);
+            value = nullptr;
           } break;
         }
       } break;
       case SUMS: {
         switch (query_fields[i].attr_type()) {
           case FLOATS: {
-            os << double2string(para[i].sum);
+            if (values == nullptr) {
+              os << double2string(para[i].sum);
+            } else {
+              value_init_float(value, para[i].sum);
+            }
           } break;
           case CHARS: {  //?
-            os << double2string(para[i].sum);
+            if (values == nullptr) {
+              os << double2string(para[i].sum);
+            } else {
+              value_init_string(value, double2string(para[i].sum).c_str());
+            }
           } break;
           case INTS: {
-            os << (int)para[i].sum;
+            if (values == nullptr) {
+              os << (int)para[i].sum;
+            } else {
+              value_init_integer(value, (int)para[i].sum);
+            }
           } break;
           default: {
+            free(value);
+            value = nullptr;
           } break;
         }
       } break;
       default: {
+        free(value);
+        value = nullptr;
       } break;
     }
   }
-  os << std::endl;
+
+  if (value != nullptr && values != nullptr) {
+    values->push_back(value);
+  } else {
+    os << std::endl;
+  }
 }
 
 RC processAggrefunc(const std::vector<Field> &query_fields, AggrefuncPara *para, Tuple *tuple)
@@ -661,7 +743,7 @@ RC processAggrefunc(const std::vector<Field> &query_fields, AggrefuncPara *para,
   return rc;
 }
 
-RC ExecuteStage::do_select(SQLStageEvent *sql_event)
+RC ExecuteStage::do_select(SQLStageEvent *sql_event, std::vector<Value *> *values)
 {
   SelectStmt *select_stmt = (SelectStmt *)(sql_event->stmt());
   SessionEvent *session_event = sql_event->session_event();
@@ -669,6 +751,11 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   for (size_t i = 0; i < select_stmt->tables().size(); ++i) {
     std::string str = select_stmt->tables()[i]->table_meta().name();
     table_n2id[str] = select_stmt->tables().size() - i - 1;
+  }
+
+  // sub selection should return rows with one field
+  if (values != nullptr && select_stmt->query_fields().size() != 1) {
+    return RC::INTERNAL;
   }
 
   // DEFER([&]() { delete[] scan_oper; });
@@ -720,7 +807,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
       }
       processAggrefunc(select_stmt->query_fields(), para, tuple);
     }
-    AggrefuncPrint(ss, select_stmt->query_fields(), para);
+    AggrefuncPrint(ss, select_stmt->query_fields(), para, values);
   } else {
     print_tuple_header(ss, project_oper, select_stmt->tables().size());
     while ((rc = project_oper.next()) == RC::SUCCESS) {
@@ -733,8 +820,25 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
         break;
       }
 
-      tuple_to_string(ss, tuple, project_oper.tuplesNum() / sizeof(Tuple *));
-      ss << std::endl;
+      if (values == nullptr) {
+        tuple_to_string(ss, tuple, project_oper.tuplesNum() / sizeof(Tuple *));
+        ss << std::endl;
+      } else {
+        TupleCell cell;
+        rc = (*tuple)->cell_at(0, cell);
+        if (rc != RC::SUCCESS) {
+          LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+          break;
+        }
+
+        Value *value = (Value*)malloc(sizeof(Value));
+        rc = cell.get_value(value);
+        if (rc != RC::SUCCESS) {
+          LOG_WARN("failed to transfer field to value, index=%d, rc=%s", 0, strrc(rc));
+          return rc;
+        }
+        values->push_back(value);
+      }
     }
   }
 
@@ -744,7 +848,11 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   } else {
     rc = project_oper.close();
   }
-  session_event->set_response(ss.str());
+
+  if (values == nullptr) {
+    session_event->set_response(ss.str());
+  }
+
   // 资源释放，替代之前的defer
   for (size_t i = 0; i < select_stmt->tables().size(); ++i) {
     delete scan_oper[i];
@@ -980,16 +1088,16 @@ RC ExecuteStage::do_update(SQLStageEvent *sql_event)
   // execute sub query
   for (size_t i = 0; i < update_stmt->field_num(); i++) {
     if (update_stmt->value(i)->type == SELECTS) {
-      Value *actual_value = (Value *)malloc(sizeof(Value));
-      rc = get_value((SelectStmt *)update_stmt->value(i)->data, actual_value);
+      auto actual_values = new std::vector<Value*>();
+      rc = get_value(sql_event, (SelectStmt *)update_stmt->value(i)->data, actual_values);
       if (rc != RC::SUCCESS) {
         LOG_WARN("fail to get value of sub select_stmt");
         session_event->set_response("FAILURE");
         return rc;
       }
       free(update_stmt->value(i)->data);
-      update_stmt->set_value(i, actual_value->type, actual_value->data);
-      free(actual_value);
+      update_stmt->set_value(i, actual_values->at(0)->type, actual_values->at(0)->data);
+      free(actual_values);
     }
   }
 
@@ -1084,9 +1192,19 @@ RC ExecuteStage::do_clog_sync(SQLStageEvent *sql_event)
   return rc;
 }
 
-RC ExecuteStage::get_value(SelectStmt *select_stmt, Value *value)
+RC ExecuteStage::get_value(SQLStageEvent *sql_event, SelectStmt *select_stmt, std::vector<Value*> *values)
 {
   RC rc = RC::SUCCESS;
+
+  UpdateStmt *stmt = (UpdateStmt *)sql_event->stmt();
+  sql_event->set_stmt(select_stmt);
+  do_select(sql_event, values);
+  sql_event->set_stmt(stmt);
+  if (values->size() != 1) {
+    LOG_WARN("values returned by sub selection show be 1");
+    return RC::INTERNAL;
+  }
+  return RC::SUCCESS;
 //  if (select_stmt->tables().size() != 1) {
 //    LOG_WARN("select more than 1 tables is not supported");
 //    rc = RC::UNIMPLENMENT;
