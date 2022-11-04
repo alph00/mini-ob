@@ -353,9 +353,7 @@ value:
 		}
     |SSS {
 			$1 = substr($1,1,strlen($1)-2);
-		printf("before init one value: %d\n", CONTEXT->value_length);
   		value_init_string(&CONTEXT->values[CONTEXT->value_length++], $1);
-  		printf("one value: %d\n", CONTEXT->value_length);
 		}
     ;
 
@@ -386,8 +384,6 @@ update:			/*  update 语句的语法解析树*/
 set_stmt:
     ID EQ set_value {
         updates_append_attribute(&CONTEXT->ssql->sstr.update, $1, CONTEXT->value_length-1);
-        printf("one set_stmt:\n");
-        printf("%d\n", CONTEXT->value_length);
     }
     ;
 
@@ -407,6 +403,7 @@ set_value:
             yyset_extra(CONTEXT->parent_context, scanner);
         }
         ParserContext *child = CONTEXT->child_context;
+        CONTEXT->child_context = NULL;
         value_init_select(&CONTEXT->values[CONTEXT->value_length++], child->ssql);
     }
     ;
