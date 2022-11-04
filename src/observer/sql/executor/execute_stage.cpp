@@ -1093,7 +1093,7 @@ RC ExecuteStage::do_update(SQLStageEvent *sql_event)
       rc = get_value(sql_event, (SelectStmt *)update_stmt->value(i)->data, actual_values);
       if (rc != RC::SUCCESS) {
         LOG_WARN("fail to get value of sub select_stmt");
-        session_event->set_response("FAILURE");
+        session_event->set_response("FAILURE\n");
         return rc;
       }
       free(update_stmt->value(i)->data);
