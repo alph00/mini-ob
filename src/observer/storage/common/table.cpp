@@ -625,7 +625,7 @@ RC Table::create_index(Trx *trx, const char *index_name, const int attribute_num
   // 创建索引相关数据
   BplusTreeIndex *index = new BplusTreeIndex(unique);
   std::string index_file = table_index_file(base_dir_.c_str(), name(), index_name);
-  rc = index->create(index_file.c_str(), new_index_meta, *(fields_metas[0])); // fake
+  //rc = index->create(index_file.c_str(), new_index_meta, *(fields_metas[0])); // fake
   if (rc != RC::SUCCESS) {
     delete index;
     LOG_ERROR("Failed to create bplus tree index. file name=%s, rc=%d:W%s", index_file.c_str(), rc, strrc(rc));
@@ -689,15 +689,12 @@ RC Table::show_index_info(std::string& result){
   const int index_num = table_meta_.index_num();
   for (int i = 0; i < index_num; i++){
     const IndexMeta* index_meta = table_meta_.index(i);
-    //const char* field=index_meta->field();
     std::vector<std::string> fields=index_meta->fields();
     const char* index_name=index_meta->name();
-    //const FieldMeta* field_meta = table_meta_.field(field);
     //Table | Non_unique |Key_name | Seq_in_index |Column_name
     for(int i=fields.size()-1;i>=0;i--){
       result.append(table_meta_.name()).append(" | ").append(index_num>0?"1":"0")\
       .append(" | ").append(index_name).append(" | ")\
-      //.append(std::to_string(table_meta_.find_field_seq(field)))
       .append(std::to_string(fields.size()-i))\
       .append(" | ").append(fields[i]).append("\n");
     }
