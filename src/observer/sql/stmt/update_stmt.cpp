@@ -18,10 +18,10 @@ See the Mulan PSL v2 for more details. */
 #include "storage/common/db.h"
 #include "storage/common/table.h"
 
-UpdateStmt::UpdateStmt(Table *table, const Value values[], int value_amount, const char * const field_name[], FilterStmt *filter_stmt)
-  : table_ (table), values_(values), value_amount_(value_amount), field_name_(field_name), filter_stmt_(filter_stmt)
-{
-}
+UpdateStmt::UpdateStmt(
+    Table *table, const Value values[], int value_amount, const char *const field_name[], FilterStmt *filter_stmt)
+    : table_(table), values_(values), value_amount_(value_amount), field_name_(field_name), filter_stmt_(filter_stmt)
+{}
 
 UpdateStmt::~UpdateStmt()
 {
@@ -31,7 +31,8 @@ UpdateStmt::~UpdateStmt()
   }
 }
 
-const char* UpdateStmt::field_name(size_t idx) const {
+const char *UpdateStmt::field_name(size_t idx) const
+{
   if (idx >= value_amount_) {
     LOG_WARN("invalid index %d to fields", idx);
     return nullptr;
@@ -40,7 +41,8 @@ const char* UpdateStmt::field_name(size_t idx) const {
   return field_name_[idx];
 }
 
-const Value * UpdateStmt::value(size_t idx) const {
+const Value *UpdateStmt::value(size_t idx) const
+{
   if (idx >= value_amount_) {
     LOG_WARN("invalid index %d to values", idx);
     return nullptr;
@@ -64,8 +66,7 @@ RC UpdateStmt::create(Db *db, const Updates &update_sql, Stmt *&stmt)
 {
   const char *table_name = update_sql.relation_name;
   if (nullptr == db || nullptr == table_name) {
-    LOG_WARN("invalid argument. db=%p, table_name=%p",
-             db, table_name);
+    LOG_WARN("invalid argument. db=%p, table_name=%p", db, table_name);
     return RC::INVALID_ARGUMENT;
   }
 
@@ -90,30 +91,23 @@ RC UpdateStmt::create(Db *db, const Updates &update_sql, Stmt *&stmt)
       return RC::SCHEMA_FIELD_MISSING;
     }
 
-    const AttrType field_type = field_meta->type();
+    // const AttrType field_type = field_meta->type();
     const AttrType value_type = value->type;
-    if (field_type != value_type) {
-      if (value_type == SELECTS) {
-        Stmt *stmt = nullptr;
-        RC rc = Stmt::create_stmt(db, *(Query*)value->data, stmt);
-        if (rc != RC::SUCCESS) {
-          LOG_WARN("failed to create stmt. rc=%d:%s", rc, strrc(rc));
-          return rc;
-        }
-//        query_destroy((Query*)value->data);
-        value->data = stmt;
-        LOG_DEBUG("succeed to process sub select query");
-      } else {
-        LOG_WARN("field type mismatch. table=%s, field=%s, field type=%d, value_type=%d",
-                 table_name, field_meta->name(), field_type, value_type);
-        return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+    if (value_type == SELECTS) {
+      Stmt *stmt = nullptr;
+      RC rc = Stmt::create_stmt(db, *(Query *)value->data, stmt);
+      if (rc != RC::SUCCESS) {
+        LOG_WARN("failed to create stmt. rc=%d:%s", rc, strrc(rc));
+        return rc;
       }
-
+      //        query_destroy((Query*)value->data);
+      value->data = stmt;
+      LOG_DEBUG("succeed to process sub select query");
     }
   }
 
   // create attribute names
-  char **attr_names = (char**)malloc(sizeof(char*) * update_sql.value_num);
+  char **attr_names = (char **)malloc(sizeof(char *) * update_sql.value_num);
   for (size_t i = 0; i < update_sql.value_num; i++) {
     attr_names[i] = strdup(update_sql.attribute_name[i]);
   }
@@ -123,8 +117,7 @@ RC UpdateStmt::create(Db *db, const Updates &update_sql, Stmt *&stmt)
   table_map.insert(std::pair<std::string, Table *>(std::string(table_name), table));
 
   FilterStmt *filter_stmt = nullptr;
-  RC rc = FilterStmt::create(db, table, &table_map,
-                             update_sql.conditions, update_sql.condition_num, filter_stmt);
+  RC rc = FilterStmt::create(db, table, &table_map, update_sql.conditions, update_sql.condition_num, filter_stmt);
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to create filter statement. rc=%d:%s", rc, strrc(rc));
     return rc;
