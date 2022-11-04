@@ -625,7 +625,7 @@ RC Table::create_index(Trx *trx, const char *index_name, const int attribute_num
   // 创建索引相关数据
   BplusTreeIndex *index = new BplusTreeIndex(unique);
   std::string index_file = table_index_file(base_dir_.c_str(), name(), index_name);
-  //rc = index->create(index_file.c_str(), new_index_meta, *(fields_metas[0])); // fake
+  rc = index->create(index_file.c_str(), new_index_meta, *(fields_metas[0])); // fake
   if (rc != RC::SUCCESS) {
     delete index;
     LOG_ERROR("Failed to create bplus tree index. file name=%s, rc=%d:W%s", index_file.c_str(), rc, strrc(rc));
