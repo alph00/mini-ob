@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <sys/ucontext.h>
 RC JoinOperator::open()
 {
   RC rc = RC::SUCCESS;
@@ -39,20 +40,10 @@ RC JoinOperator::open()
   //   tuple_->set_record(&(*(RowTuple *)tuple).record());
   //   tuple tuples_.emplace_back(tuple_);
   // }
-  rc = left_->next();
-  if (rc != RC::RECORD_EOF) {
-    Tuple **t = left_->current_tuple();
-    if (nullptr == t || nullptr == t[0]) {  // 通过t**,和t[0]*代表
-      LOG_WARN("failed to get tuple from operator");
-      return RC::INTERNAL;
-    }
-    // memcpy(tuples_, t, left_->tuplesNum());
-    for (size_t i = 0; i < left_->tuplesNum() / (sizeof(Tuple *)); ++i) {
-      tuples_[i] = (RowTuple *)t[i];
-    }
-  }
+
   return rc;
 }
+
 int JoinOperator::tuplesNum()
 {
   return table_num;
@@ -60,21 +51,22 @@ int JoinOperator::tuplesNum()
 RC JoinOperator::next()
 {
   RC rc = RC::SUCCESS;
-
-  // Operator *oper = right_;
-
-  // while (RC::SUCCESS == (rc = oper->next())) {
-  //   Tuple *tuple = oper->current_tuple()[0];
-  //   if (nullptr == tuple) {
-  //     rc = RC::INTERNAL;
-  //     LOG_WARN("failed to get tuple from operator");
-  //     break;
-  //   }
-
-  //   if (do_predicate(static_cast<RowTuple &>(*tuple))) {
-  //     return rc;
-  //   }
-  // }
+  if (start) {
+    start = false;
+    if (left_->next() != RC::RECORD_EOF) {
+      Tuple **t = left_->current_tuple();
+      if (nullptr == t || nullptr == t[0]) {  // 通过t**,和t[0]*代表
+        LOG_WARN("failed to get tuple from operator");
+        return RC::INTERNAL;
+      }
+      // memcpy(tuples_, t, left_->tuplesNum());
+      for (size_t i = 0; i < left_->tuplesNum() / (sizeof(Tuple *)); ++i) {
+        tuples_[i] = (RowTuple *)t[i];
+      }
+    } else {
+      return RC::RECORD_EOF;
+    }
+  }
   while (true) {
     RC rc2 = RC::SUCCESS;
 

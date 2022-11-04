@@ -51,4 +51,5 @@ private:
   int table_num = 0;
   RowTuple **tuples_ = nullptr;
   FilterStmt *join_filter_stmt_ = nullptr;
+  bool start = true;
 };

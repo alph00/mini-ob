@@ -783,13 +783,13 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event, std::vector<Value *> *value
   ProjectOperator project_oper;
   project_oper.add_child(&pred_oper);
   rc = project_oper.open();
-  for (const Field &field : select_stmt->query_fields()) {
-    project_oper.add_projection(
-        field.table(), field.meta(), field.isAggrefunc(), field.aggrefunc(), table_n2id[field.table()->name()]);
-  }
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to open operator");
     return rc;
+  }
+  for (const Field &field : select_stmt->query_fields()) {
+    project_oper.add_projection(
+        field.table(), field.meta(), field.isAggrefunc(), field.aggrefunc(), table_n2id[field.table()->name()]);
   }
 
   // 目前认为普通查询和聚合函数不能同时存在
