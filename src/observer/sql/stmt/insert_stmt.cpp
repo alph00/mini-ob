@@ -14,8 +14,11 @@ See the Mulan PSL v2 for more details. */
 
 #include "sql/stmt/insert_stmt.h"
 #include "common/log/log.h"
+#include "sql/parser/parse_defs.h"
 #include "storage/common/db.h"
 #include "storage/common/table.h"
+#include <cmath>
+#include <cstdlib>
 
 InsertStmt::InsertStmt(Table *table, const Values *values, const size_t *value_nums, int values_num)
     : table_(table), values_(values), value_nums_(value_nums), values_num_(values_num)
