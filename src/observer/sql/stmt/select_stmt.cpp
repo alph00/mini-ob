@@ -13,11 +13,15 @@ See the Mulan PSL v2 for more details. */
 //
 
 #include "sql/stmt/select_stmt.h"
+#include "sql/parser/parse_defs.h"
 #include "sql/stmt/filter_stmt.h"
 #include "common/log/log.h"
 #include "common/lang/string.h"
 #include "storage/common/db.h"
+#include "storage/common/field.h"
 #include "storage/common/table.h"
+#include <cstddef>
+#include <cstring>
 
 SelectStmt::~SelectStmt()
 {
@@ -60,9 +64,9 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
     }
 
     tables.push_back(table);
-    table_map.insert(std::pair<std::string, Table*>(table_name, table));
+    table_map.insert(std::pair<std::string, Table *>(table_name, table));
   }
-  
+
   // collect query fields in `select` statement
   std::vector<Field> query_fields;
   for (int i = select_sql.attr_num - 1; i >= 0; i--) {
@@ -73,7 +77,7 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
         wildcard_fields(table, query_fields);
       }
 
-    } else if (!common::is_blank(relation_attr.relation_name)) { // TODO
+    } else if (!common::is_blank(relation_attr.relation_name)) {  // TODO
       const char *table_name = relation_attr.relation_name;
       const char *field_name = relation_attr.attribute_name;
 
@@ -102,7 +106,7 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
             return RC::SCHEMA_FIELD_MISSING;
           }
 
-        query_fields.push_back(Field(table, field_meta));
+          query_fields.push_back(Field(table, field_meta));
         }
       }
     } else {
@@ -122,6 +126,70 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
     }
   }
 
+  for (size_t i = 0; i < select_sql.aggrefunc_num; ++i) {
+    const Aggrefunc &func = select_sql.aggrefuncs[i];
+    if (func.num >= 0 ||
+        ((common::is_blank(func.attribute.relation_name)) && 0 == strcmp(func.attribute.attribute_name, "*"))) {
+      if (func.type != COUNTS) {  // 不允许出现avg(*)
+        LOG_WARN("invalid aggregation sytax!");
+        return RC::SQL_SYNTAX;
+      }
+      for (auto table : tables) {
+        query_fields.push_back(Field(table, nullptr, true, func));
+      }
+    } else if (!common::is_blank(func.attribute.relation_name)) {
+      const char *table_name = func.attribute.relation_name;
+      const char *field_name = func.attribute.attribute_name;
+      if (0 == strcmp(table_name, "*")) {
+        if (0 != strcmp(field_name, "*")) {
+          LOG_WARN("invalid field name while table is *. attr=%s", field_name);
+          return RC::SCHEMA_FIELD_MISSING;
+        }
+        if (func.type != COUNTS) {  // 不允许出现avg(*.*)
+          LOG_WARN("invalid aggregation sytax!");
+          return RC::SQL_SYNTAX;
+        }
+        for (auto table : tables) {
+          query_fields.push_back(Field(table, nullptr, true, func));
+        }
+      } else {
+        auto iter = table_map.find(table_name);
+        if (iter == table_map.end()) {
+          LOG_WARN("no such table in from list: %s", table_name);
+          return RC::SCHEMA_FIELD_MISSING;
+        }
+
+        Table *table = iter->second;
+        if (0 == strcmp(field_name, "*")) {
+          if (func.type != COUNTS) {  // 不允许出现avg(*)
+            LOG_WARN("invalid aggregation sytax!");
+            return RC::SQL_SYNTAX;
+          }
+          query_fields.push_back(Field(table, nullptr, true, func));
+        } else {
+          const FieldMeta *field_meta = table->table_meta().field(field_name);
+          if (nullptr == field_meta) {
+            LOG_WARN("no such field. field=%s.%s.%s", db->name(), table->name(), field_name);
+            return RC::SCHEMA_FIELD_MISSING;
+          }
+          query_fields.push_back(Field(table, field_meta, true, func));
+        }
+      }
+    } else {
+      if (tables.size() != 1) {
+        LOG_WARN("invalid. I do not know the attr's table. attr=%s", func.attribute.attribute_name);
+        return RC::SCHEMA_FIELD_MISSING;
+      }
+      Table *table = tables[0];
+      const FieldMeta *field_meta = table->table_meta().field(func.attribute.attribute_name);
+      if (nullptr == field_meta) {
+        LOG_WARN("no such field. field=%s.%s.%s", db->name(), table->name(), func.attribute.attribute_name);
+        return RC::SCHEMA_FIELD_MISSING;
+      }
+      query_fields.push_back(Field(table, field_meta, true, func));
+    }
+  }
+
   LOG_INFO("got %d tables in from stmt and %d fields in query stmt", tables.size(), query_fields.size());
 
   Table *default_table = nullptr;
@@ -131,8 +199,8 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
 
   // create filter statement in `where` statement
   FilterStmt *filter_stmt = nullptr;
-  RC rc = FilterStmt::create(db, default_table, &table_map,
-           select_sql.conditions, select_sql.condition_num, filter_stmt);
+  RC rc =
+      FilterStmt::create(db, default_table, &table_map, select_sql.conditions, select_sql.condition_num, filter_stmt);
   if (rc != RC::SUCCESS) {
     LOG_WARN("cannot construct filter stmt");
     return rc;

@@ -12,8 +12,15 @@ See the Mulan PSL v2 for more details. */
 // Created by Meiyi & Longda on 2021/4/13.
 //
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <map>
 #include <string>
 #include <sstream>
+#include <unordered_map>
 
 #include "execute_stage.h"
 
@@ -27,12 +34,15 @@ See the Mulan PSL v2 for more details. */
 #include "event/sql_event.h"
 #include "event/session_event.h"
 #include "sql/expr/tuple.h"
+#include "sql/operator/join_operator.h"
+#include "sql/operator/operator.h"
 #include "sql/operator/table_scan_operator.h"
 #include "sql/operator/index_scan_operator.h"
 #include "sql/operator/predicate_operator.h"
 #include "sql/operator/delete_operator.h"
 #include "sql/operator/project_operator.h"
 #include "sql/operator/update_operator.h"
+#include "sql/parser/parse_defs.h"
 #include "sql/stmt/stmt.h"
 #include "sql/stmt/select_stmt.h"
 #include "sql/stmt/update_stmt.h"
@@ -46,6 +56,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/common/condition_filter.h"
 #include "storage/trx/trx.h"
 #include "storage/clog/clog.h"
+#include "util/util.h"
 
 using namespace common;
 
@@ -234,43 +245,56 @@ void end_trx_if_need(Session *session, Trx *trx, bool all_right)
   }
 }
 
-void print_tuple_header(std::ostream &os, const ProjectOperator &oper)
+void print_tuple_header(std::ostream &os, const ProjectOperator &oper, int num = 1)
 {
-  const int cell_num = oper.tuple_cell_num();
-  const TupleCellSpec *cell_spec = nullptr;
-  for (int i = 0; i < cell_num; i++) {
-    oper.tuple_cell_spec_at(i, cell_spec);
-    if (i != 0) {
-      os << " | ";
+  bool enter = false;
+  bool start = false;
+  for (int j = 0; j < num; ++j) {
+    const int cell_num = oper.tuple_cell_num(j);
+    const TupleCellSpec *cell_spec = nullptr;
+    for (int i = 0; i < cell_num; i++) {
+      oper.tuple_cell_spec_at(i, cell_spec, j);
+      if (start) {
+        os << " | ";
+      } else {
+        start = true;
+      }
+
+      if (cell_spec->alias()) {
+        os << cell_spec->alias();
+      }
     }
 
-    if (cell_spec->alias()) {
-      os << cell_spec->alias();
+    if (cell_num > 0) {
+      enter = true;
     }
   }
-
-  if (cell_num > 0) {
+  if (enter) {
     os << '\n';
   }
 }
-void tuple_to_string(std::ostream &os, const Tuple &tuple)
+void tuple_to_string(std::ostream &os, Tuple **tuples_, int num)
 {
   TupleCell cell;
   RC rc = RC::SUCCESS;
   bool first_field = true;
-  for (int i = 0; i < tuple.cell_num(); i++) {
-    rc = tuple.cell_at(i, cell);
-    if (rc != RC::SUCCESS) {
-      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", i, strrc(rc));
-      break;
-    }
+  Tuple *tuple;
+  for (int j = 0; j < num; ++j) {
+    tuple = tuples_[j];
+    for (int i = 0; i < tuple->cell_num(); i++) {
+      rc = tuple->cell_at(i, cell);
+      if (rc != RC::SUCCESS) {
+        LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", i, strrc(rc));
+        break;
+      }
 
-    if (!first_field) {
-      os << " | ";
-    } else {
-      first_field = false;
+      if (!first_field) {
+        os << " | ";
+      } else {
+        first_field = false;
+      }
+      cell.to_string(os);
     }
-    cell.to_string(os);
   }
 }
 
@@ -356,100 +380,462 @@ IndexScanOperator *try_to_create_index_scan_operator(FilterStmt *filter_stmt)
   bool left_inclusive = false;
   bool right_inclusive = false;
 
-  switch (comp) {
-  case EQUAL_TO: {
-    left_cell = &value;
-    right_cell = &value;
-    left_inclusive = true;
-    right_inclusive = true;
-  } break;
+  switch (comp) {  // 这些是区间边界
+    case EQUAL_TO: {
+      left_cell = &value;
+      right_cell = &value;
+      left_inclusive = true;
+      right_inclusive = true;
+    } break;
 
-  case LESS_EQUAL: {
-    left_cell = nullptr;
-    left_inclusive = false;
-    right_cell = &value;
-    right_inclusive = true;
-  } break;
+    case LESS_EQUAL: {
+      left_cell = nullptr;
+      left_inclusive = false;
+      right_cell = &value;
+      right_inclusive = true;
+    } break;
 
-  case LESS_THAN: {
-    left_cell = nullptr;
-    left_inclusive = false;
-    right_cell = &value;
-    right_inclusive = false;
-  } break;
+    case LESS_THAN: {
+      left_cell = nullptr;
+      left_inclusive = false;
+      right_cell = &value;
+      right_inclusive = false;
+    } break;
 
-  case GREAT_EQUAL: {
-    left_cell = &value;
-    left_inclusive = true;
-    right_cell = nullptr;
-    right_inclusive = false;
-  } break;
+    case GREAT_EQUAL: {
+      left_cell = &value;
+      left_inclusive = true;
+      right_cell = nullptr;
+      right_inclusive = false;
+    } break;
 
-  case GREAT_THAN: {
-    left_cell = &value;
-    left_inclusive = false;
-    right_cell = nullptr;
-    right_inclusive = false;
-  } break;
+    case GREAT_THAN: {
+      left_cell = &value;
+      left_inclusive = false;
+      right_cell = nullptr;
+      right_inclusive = false;
+    } break;
 
-  default: {
-    LOG_WARN("should not happen. comp=%d", comp);
-  } break;
+    default: {
+      LOG_WARN("should not happen. comp=%d", comp);
+    } break;
   }
 
-  IndexScanOperator *oper = new IndexScanOperator(table, index,
-       left_cell, left_inclusive, right_cell, right_inclusive);
+  IndexScanOperator *oper = new IndexScanOperator(table, index, left_cell, left_inclusive, right_cell, right_inclusive);
 
   LOG_INFO("use index for scan: %s in table %s", index->index_meta().name(), table->name());
   return oper;
 }
+void print_Aggrefunc_header(std::ostream &os, const ProjectOperator &oper, size_t num)
+{
+  const TupleCellSpec *cell_spec = nullptr;
+  for (size_t i = 0; i < num; i++) {
+    oper.tuple_cell_spec_at(i, cell_spec);
+    if (i != 0) {
+      os << " | ";
+    }
 
-RC ExecuteStage::do_select(SQLStageEvent *sql_event)
+    if (cell_spec->alias()) {
+      os << cell_spec->alias();
+    }
+  }
+
+  if (num > 0) {
+    os << '\n';
+  }
+}
+void AggrefuncPrint(
+    std::ostream &os, const std::vector<Field> &query_fields, AggrefuncPara *para, std::vector<Value *> *values)
+{
+  bool first_field = true;
+  // when values isn't null, query_field.size must be one
+  assert(values == nullptr || ((values != nullptr) && query_fields.size() == 1));
+  Value *value = (Value *)malloc(sizeof(Value));
+
+  for (size_t i = 0; i < query_fields.size(); ++i) {
+    if (!first_field) {
+      os << " | ";
+    } else {
+      first_field = false;
+    }
+    switch (query_fields[i].aggrefunc()->type) {
+      case COUNTS: {
+        if (values == nullptr) {
+          os << para[i].count;
+        } else {
+          value_init_integer(value, para[i].count);
+        }
+      } break;
+      case AVGS: {
+        switch (query_fields[i].attr_type()) {
+          case CHARS: {
+            if (values == nullptr) {
+              os << double2string(para[i].sum / para[i].count);
+            } else {
+              value_init_string(value, double2string(para[i].sum / para[i].count).c_str());
+            }
+          } break;
+          case FLOATS: {
+            if (values == nullptr) {
+              os << double2string(para[i].sum / para[i].count);
+            } else {
+              value_init_float(value, para[i].sum / para[i].count);
+            }
+          } break;
+          case INTS: {
+            if (values == nullptr) {
+              os << double2string(para[i].sum / para[i].count);
+            } else {
+              value_init_integer(value, para[i].sum / para[i].count);
+            }
+          } break;
+          default: {
+            free(value);
+            value = nullptr;
+          } break;
+        }
+      } break;
+      case MAXS: {
+        switch (query_fields[i].attr_type()) {
+          case INTS: {
+            if (values == nullptr) {
+              os << para[i].max_i;
+            } else {
+              value_init_integer(value, para[i].max_i);
+            }
+          } break;
+          case FLOATS: {
+            if (values == nullptr) {
+              os << double2string(para[i].max_f);
+            } else {
+              value_init_integer(value, para[i].max_f);
+            }
+          } break;
+          case CHARS: {  // to do qfs ?
+            if (values == nullptr) {
+              os << para[i].max_c;
+            } else {
+              value_init_string(value, para[i].max_c);
+            }
+          } break;
+          case DATES: {
+            int data = para[i].max_i;
+            if (values == nullptr) {
+              char buf[16] = {0};
+              snprintf(buf,
+                  sizeof(buf),
+                  "%04d-%02d-%02d",
+                  data / 10000,
+                  (data % 10000) / 100,
+                  data % 100);  // 注意这里月份和天数，不足两位时需要填充0
+              buf[10] = '\0';
+              os << buf;
+            } else {
+              value_init_integer(value, data);
+            }
+          } break;
+          default: {
+            free(value);
+            value = nullptr;
+          } break;
+        }
+      } break;
+      case MINS: {
+        switch (query_fields[i].attr_type()) {
+          case INTS: {
+            if (values == nullptr) {
+              os << para[i].min_i;
+            } else {
+              value_init_integer(value, para[i].min_i);
+            }
+          } break;
+          case FLOATS: {
+            if (values == nullptr) {
+              os << double2string(para[i].min_f);
+            } else {
+              value_init_float(value, para[i].min_f);
+            }
+          } break;
+          case CHARS: {
+            if (values == nullptr) {
+              os << para[i].min_c;
+            } else {
+              value_init_string(value, para[i].min_c);
+            }
+          } break;
+          case DATES: {
+            int data = para[i].min_i;
+            if (values == nullptr) {
+              char buf[16] = {0};
+              snprintf(buf,
+                  sizeof(buf),
+                  "%04d-%02d-%02d",
+                  data / 10000,
+                  (data % 10000) / 100,
+                  data % 100);  // 注意这里月份和天数，不足两位时需要填充0
+              buf[10] = '\0';
+              os << buf;
+            } else {
+              value_init_integer(value, data);
+            }
+          } break;
+          default: {
+            free(value);
+            value = nullptr;
+          } break;
+        }
+      } break;
+      case SUMS: {
+        switch (query_fields[i].attr_type()) {
+          case FLOATS: {
+            if (values == nullptr) {
+              os << double2string(para[i].sum);
+            } else {
+              value_init_float(value, para[i].sum);
+            }
+          } break;
+          case CHARS: {  //?
+            if (values == nullptr) {
+              os << double2string(para[i].sum);
+            } else {
+              value_init_string(value, double2string(para[i].sum).c_str());
+            }
+          } break;
+          case INTS: {
+            if (values == nullptr) {
+              os << (int)para[i].sum;
+            } else {
+              value_init_integer(value, (int)para[i].sum);
+            }
+          } break;
+          default: {
+            free(value);
+            value = nullptr;
+          } break;
+        }
+      } break;
+      default: {
+        free(value);
+        value = nullptr;
+      } break;
+    }
+  }
+
+  if (value != nullptr && values != nullptr) {
+    values->push_back(value);
+  } else {
+    os << std::endl;
+  }
+}
+
+RC processAggrefunc(const std::vector<Field> &query_fields, AggrefuncPara *para, Tuple *tuple)
+{
+  RC rc = RC::SUCCESS;
+  for (size_t i = 0; i < query_fields.size(); ++i) {
+    const Aggrefunc *func = query_fields[i].aggrefunc();
+    switch (func->type) {
+      case COUNTS: {
+        if (query_fields[i].meta() == nullptr) {
+          if (func->num >= 0) {  // count(1)
+            para[i].count += func->num;
+          } else {  // count(*)
+            para[i].count += 1;
+          }
+        } else {
+          // 目前不考虑NULL
+          para[i].count += 1;
+        }
+      } break;
+      case AVGS: {
+        TupleCell cell;
+        rc = tuple->cell_at(i, cell);
+        para[i].count += 1;
+        const char *data = cell.data();
+        switch (cell.attr_type()) {
+          case FLOATS: {
+            para[i].sum += *(float *)data;
+          } break;
+          case INTS:
+          case DATES: {
+            para[i].sum += *(int *)data;
+          } break;
+          case CHARS: {
+            char *data_c = strdup(data);
+            float data_f = strtof(data_c, nullptr);
+            para[i].sum += data_f;
+            free(data_c);
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+      case MAXS: {
+        TupleCell cell;
+        rc = tuple->cell_at(i, cell);
+        const char *data = cell.data();
+        switch (cell.attr_type()) {
+          case FLOATS: {
+            para[i].max_f = std::max(para[i].max_f, *(float *)data);
+          }
+          case INTS:
+          case DATES: {
+            para[i].max_i = std::max(para[i].max_i, *(int *)data);
+          } break;
+          case CHARS: {
+            if (strcmp(para[i].max_c, data) < 0) {
+              strcpy(para[i].max_c, data);
+            }
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+      case MINS: {
+        TupleCell cell;
+        rc = tuple->cell_at(i, cell);
+        const char *data = cell.data();
+        switch (cell.attr_type()) {
+          case FLOATS: {
+            para[i].min_f = std::min(para[i].min_f, *(float *)data);
+          }
+          case INTS:
+          case DATES: {
+            para[i].min_i = std::min(para[i].min_i, *(int *)data);
+          } break;
+          case CHARS: {
+            if (strcmp(para[i].min_c, data) > 0) {
+              strcpy(para[i].min_c, data);
+            }
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+      case SUMS: {
+        TupleCell cell;
+        rc = tuple->cell_at(i, cell);
+        const char *data = cell.data();
+        switch (cell.attr_type()) {
+          case FLOATS: {
+            para[i].sum += *(float *)data;
+          } break;
+          case INTS:
+          case DATES: {
+            para[i].sum += *(int *)data;
+          } break;
+          case CHARS: {
+            char *data_c = strdup(data);
+            float data_f = strtof(data_c, nullptr);
+            para[i].sum += data_f;
+            free(data_c);
+          } break;
+          default: {
+          } break;
+        }
+      } break;
+    }
+  }
+  return rc;
+}
+
+RC ExecuteStage::do_select(SQLStageEvent *sql_event, std::vector<Value *> *values)
 {
   SelectStmt *select_stmt = (SelectStmt *)(sql_event->stmt());
   SessionEvent *session_event = sql_event->session_event();
   RC rc = RC::SUCCESS;
-  if (select_stmt->tables().size() != 1) {
-    LOG_WARN("select more than 1 tables is not supported");
-    rc = RC::UNIMPLENMENT;
-    return rc;
+  for (size_t i = 0; i < select_stmt->tables().size(); ++i) {
+    std::string str = select_stmt->tables()[i]->table_meta().name();
+    table_n2id[str] = select_stmt->tables().size() - i - 1;
   }
 
-  Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt());
-  scan_oper=nullptr;
-  if (nullptr == scan_oper) {
-    scan_oper = new TableScanOperator(select_stmt->tables()[0]);
+  // sub selection should return rows with one field
+  if (values != nullptr && select_stmt->query_fields().size() != 1) {
+    return RC::INTERNAL;
   }
 
-  DEFER([&] () {delete scan_oper;});
-
+  // DEFER([&]() { delete[] scan_oper; });
+  Operator *scan_oper[select_stmt->tables().size()];
+  Operator *join_oper[select_stmt->tables().size()];
   PredicateOperator pred_oper(select_stmt->filter_stmt());
-  pred_oper.add_child(scan_oper);
+  if (select_stmt->tables().size() > 1) {
+    // 多表查询目前不考虑索引
+    for (size_t i = 0; i < select_stmt->tables().size(); ++i) {
+      scan_oper[i] = new TableScanOperator(select_stmt->tables()[select_stmt->tables().size() - 1 - i]);
+    }
+    join_oper[0] = new JoinOperator(scan_oper[0], scan_oper[1]);
+    for (size_t i = 1; i < select_stmt->tables().size() - 1; ++i) {
+      join_oper[i] = new JoinOperator(join_oper[i - 1], scan_oper[i + 1]);
+    }
+    pred_oper.add_child(join_oper[select_stmt->tables().size() - 2]);
+  } else {  // 单表
+    scan_oper[0] = try_to_create_index_scan_operator(select_stmt->filter_stmt());
+    scan_oper[0]=nullptr;
+    if (nullptr == scan_oper[0]) {
+      scan_oper[0] = new TableScanOperator(select_stmt->tables()[0]);
+    }
+    pred_oper.add_child(scan_oper[0]);
+  }
   ProjectOperator project_oper;
   project_oper.add_child(&pred_oper);
-  for (const Field &field : select_stmt->query_fields()) {
-    project_oper.add_projection(field.table(), field.meta());
-  }
   rc = project_oper.open();
+  for (const Field &field : select_stmt->query_fields()) {
+    project_oper.add_projection(
+        field.table(), field.meta(), field.isAggrefunc(), field.aggrefunc(), table_n2id[field.table()->name()]);
+  }
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to open operator");
     return rc;
   }
 
+  // 目前认为普通查询和聚合函数不能同时存在
+  // 目前聚合函数不能多表查询
+  // 先不考虑sum(2)这种
   std::stringstream ss;
-  print_tuple_header(ss, project_oper);
-  while ((rc = project_oper.next()) == RC::SUCCESS) {
-    // get current record
-    // write to response
-    Tuple * tuple = project_oper.current_tuple();
-    if (nullptr == tuple) {
-      rc = RC::INTERNAL;
-      LOG_WARN("failed to get current record. rc=%s", strrc(rc));
-      break;
+  if (select_stmt->query_fields()[0].isAggrefunc() == true) {  // to do qfs
+    print_Aggrefunc_header(ss, project_oper, select_stmt->query_fields().size());
+    AggrefuncPara para[select_stmt->query_fields().size()];
+    while ((rc = project_oper.next()) == RC::SUCCESS) {
+      Tuple *tuple = project_oper.current_tuple()[0];
+      if (nullptr == tuple) {
+        rc = RC::INTERNAL;
+        LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+        break;
+      }
+      processAggrefunc(select_stmt->query_fields(), para, tuple);
     }
+    AggrefuncPrint(ss, select_stmt->query_fields(), para, values);
+  } else {
+    print_tuple_header(ss, project_oper, select_stmt->tables().size());
+    while ((rc = project_oper.next()) == RC::SUCCESS) {
+      // get current record
+      // write to response
+      Tuple **tuple = project_oper.current_tuple();
+      if (nullptr == tuple || nullptr == tuple[0]) {
+        rc = RC::INTERNAL;
+        LOG_WARN("failed to get current record. rc=%s", strrc(rc));
+        break;
+      }
 
-    tuple_to_string(ss, *tuple);
-    ss << std::endl;
+      if (values == nullptr) {
+        tuple_to_string(ss, tuple, project_oper.tuplesNum() / sizeof(Tuple *));
+        ss << std::endl;
+      } else {
+        TupleCell cell;
+        rc = (*tuple)->cell_at(0, cell);
+        if (rc != RC::SUCCESS) {
+          LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+          break;
+        }
+
+        Value *value = (Value *)malloc(sizeof(Value));
+        rc = cell.get_value(value);
+        if (rc != RC::SUCCESS) {
+          LOG_WARN("failed to transfer field to value, index=%d, rc=%s", 0, strrc(rc));
+          return rc;
+        }
+        values->push_back(value);
+      }
+    }
   }
 
   if (rc != RC::RECORD_EOF) {
@@ -458,7 +844,20 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   } else {
     rc = project_oper.close();
   }
-  session_event->set_response(ss.str());
+
+  if (values == nullptr) {
+    session_event->set_response(ss.str());
+  }
+
+  // 资源释放，替代之前的defer
+  for (size_t i = 0; i < select_stmt->tables().size(); ++i) {
+    delete scan_oper[i];
+    if (i != select_stmt->tables().size() - 1) {
+      delete join_oper[i];
+    }
+  }
+  table_n2id.clear();
+  //
   return rc;
 }
 
@@ -583,6 +982,7 @@ RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
   Db *db = session->get_current_db();
   Trx *trx = session->current_trx();
   CLogManager *clog_manager = db->get_clog_manager();
+  RC rc = RC::SUCCESS;
 
   if (stmt == nullptr) {
     LOG_WARN("cannot find statement");
@@ -592,7 +992,7 @@ RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
   InsertStmt *insert_stmt = (InsertStmt *)stmt;
   Table *table = insert_stmt->table();
 
-  RC rc = table->insert_record(trx, insert_stmt->value_amount(), insert_stmt->values());
+  rc = table->insert_record(trx, insert_stmt->values_num(), insert_stmt->values_array(), insert_stmt->value_nums());
   if (rc == RC::SUCCESS) {
     if (!session->is_trx_multi_operation_mode()) {
       CLogRecord *clog_record = nullptr;
@@ -616,6 +1016,7 @@ RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
   } else {
     session_event->set_response("FAILURE\n");
   }
+
   return rc;
 }
 
@@ -679,15 +1080,33 @@ RC ExecuteStage::do_update(SQLStageEvent *sql_event) {
   }
 
   UpdateStmt *update_stmt = (UpdateStmt *)stmt;
+  RC rc = RC::SUCCESS;
+
+  // execute sub query
+  for (size_t i = 0; i < update_stmt->field_num(); i++) {
+    if (update_stmt->value(i)->type == SELECTS) {
+      auto actual_values = new std::vector<Value *>();
+      rc = get_value(sql_event, (SelectStmt *)update_stmt->value(i)->data, actual_values);
+      if (rc != RC::SUCCESS) {
+        LOG_WARN("fail to get value of sub select_stmt");
+        session_event->set_response("FAILURE\n");
+        return rc;
+      }
+      free(update_stmt->value(i)->data);
+      update_stmt->set_value(i, actual_values->at(0)->type, actual_values->at(0)->data);
+      free(actual_values);
+    }
+  }
+
   TableScanOperator scan_oper(update_stmt->table());
   PredicateOperator pred_oper(update_stmt->filter_stmt());
   pred_oper.add_child(&scan_oper);
   UpdateOperator update_oper(update_stmt, trx);
   update_oper.add_child(&pred_oper);
 
-  RC rc = update_oper.open();
+  rc = update_oper.open();
   if (rc != RC::SUCCESS) {
-    session_event->set_response("FAILURE");
+    session_event->set_response("FAILURE\n");
   } else {
     session_event->set_response("SUCCESS\n");
   }
@@ -767,5 +1186,83 @@ RC ExecuteStage::do_clog_sync(SQLStageEvent *sql_event)
     session_event->set_response("SUCCESS\n");
   }
 
+  return rc;
+}
+
+RC ExecuteStage::get_value(SQLStageEvent *sql_event, SelectStmt *select_stmt, std::vector<Value *> *values)
+{
+  RC rc = RC::SUCCESS;
+
+  UpdateStmt *stmt = (UpdateStmt *)sql_event->stmt();
+  sql_event->set_stmt(select_stmt);
+  do_select(sql_event, values);
+  sql_event->set_stmt(stmt);
+  if (values->size() != 1) {
+    LOG_WARN("values returned by sub selection show be 1");
+    return RC::INTERNAL;
+  }
+  return RC::SUCCESS;
+  //  if (select_stmt->tables().size() != 1) {
+  //    LOG_WARN("select more than 1 tables is not supported");
+  //    rc = RC::UNIMPLENMENT;
+  //    return rc;
+  //  }
+  //  if (select_stmt->query_fields().size() != 1) {
+  //    LOG_WARN("select more than 1 field is not allowed");
+  //    rc = RC::INVALID_ARGUMENT;
+  //    return rc;
+  //  }
+  //
+  //  Operator *scan_oper = try_to_create_index_scan_operator(select_stmt->filter_stmt());
+  //  if (nullptr == scan_oper) {
+  //    scan_oper = new TableScanOperator(select_stmt->tables()[0]);
+  //  }
+  //
+  //  DEFER([&]() { delete scan_oper; });
+  //
+  //  PredicateOperator pred_oper(select_stmt->filter_stmt());
+  //  pred_oper.add_child(scan_oper);
+  //  ProjectOperator project_oper;
+  //  project_oper.add_child(&pred_oper);
+  //  for (const Field &field : select_stmt->query_fields()) {
+  //    project_oper.add_projection(field.table(), field.meta());
+  //  }
+  //  rc = project_oper.open();
+  //  if (rc != RC::SUCCESS) {
+  //    LOG_WARN("failed to open operator");
+  //    return rc;
+  //  }
+  //
+  //
+  //  size_t record_num = 0;
+  //  while ((rc = project_oper.next()) == RC::SUCCESS) {
+  //    if (++record_num > 1) {
+  //      break;
+  //    }
+  //    Tuple *tuple = project_oper.current_tuple();
+  //    TupleCell cell;
+  //    rc = tuple->cell_at(0, cell);
+  //    if (rc != RC::SUCCESS) {
+  //      LOG_WARN("failed to fetch field of cell. index=%d, rc=%s", 0, strrc(rc));
+  //      break;
+  //    }
+  //
+  //    rc = cell.get_value(value);
+  //    if (rc != RC::SUCCESS) {
+  //      LOG_WARN("failed to transfer field to value, index=%d, rc=%s", 0, strrc(rc));
+  //      return rc;
+  //    }
+  //  }
+  //
+  //  if (rc != RC::RECORD_EOF) {
+  //    LOG_WARN("something wrong while iterate operator. rc=%s", strrc(rc));
+  //    project_oper.close();
+  //  } else {
+  //    rc = project_oper.close();
+  //  }
+  //
+  //  if (record_num == 0) {
+  //    rc = RC::INTERNAL;
+  //  }
   return rc;
 }

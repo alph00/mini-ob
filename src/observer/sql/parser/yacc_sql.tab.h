@@ -15,7 +15,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
@@ -97,6 +97,7 @@ extern int yydebug;
     STAR = 307,
     STRING_V = 308
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */
@@ -124,6 +125,8 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
+
 int yyparse (void *scanner);
+
 
 #endif /* !YY_YY_YACC_SQL_TAB_H_INCLUDED  */

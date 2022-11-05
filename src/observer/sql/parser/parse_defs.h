@@ -22,6 +22,7 @@ See the Mulan PSL v2 for more details. */
 #define MAX_ATTR_NAME 20
 #define MAX_ERROR_MESSAGE 20
 #define MAX_DATA 50
+#define MAX_RECORD_NUM 20
 
 // 属性结构体
 typedef struct {
@@ -45,14 +46,28 @@ typedef enum {
   CHARS,
   INTS,
   DATES,  // qfs
-  FLOATS
+  FLOATS,
+  REGEXP,
+  SELECTS,
 } AttrType;
+
+// 聚合函数类型
+typedef enum {
+  COUNTS,  // 0
+  MAXS,    // 1
+  MINS,    // 2
+  SUMS,    // 3
+  AVGS     // 4
+} AggrefuncType;
 
 // 属性值
 typedef struct _Value {
   AttrType type;  // type of value
   void *data;     // value
 } Value;
+
+// array of value
+typedef Value Values[MAX_NUM];
 
 typedef struct _Condition {
   int left_is_attr;    // TRUE if left-hand side is an attribute
@@ -66,6 +81,16 @@ typedef struct _Condition {
   Value right_value;   // right-hand side value if right_is_attr = FALSE
 } Condition;
 
+// 聚合函数
+typedef struct _Aggrefunc {
+  AggrefuncType type;  // type of Aggregation function
+  // size_t attr_num;     // Length of attrs in Aggregation function
+  // RelAttr attributes[MAX_NUM];  // attrs in Aggregation function
+  // size_t allfields;   // whether to select all fields
+  RelAttr attribute;  // attr in Aggregation function
+  int num;            // num in Aggregation function
+} Aggrefunc;
+
 // struct of select
 typedef struct {
   size_t attr_num;                // Length of attrs in Select clause
@@ -74,13 +99,16 @@ typedef struct {
   char *relations[MAX_NUM];       // relations in From clause
   size_t condition_num;           // Length of conditions in Where clause
   Condition conditions[MAX_NUM];  // conditions in Where clause
+  size_t aggrefunc_num;           // Length of aggregation functions in Select clause
+  Aggrefunc aggrefuncs[MAX_NUM];  // aggregation functions in Select clause
 } Selects;
 
 // struct of insert
 typedef struct {
   char *relation_name;    // Relation to insert into
-  size_t value_num;       // Length of values
-  Value values[MAX_NUM];  // values to insert
+  size_t values_num;           // Length of [(xx,xx), (xx,xx), (xx,xx)]
+  size_t value_nums[MAX_RECORD_NUM];  // Length of every (xx,xx,xx)
+  Values values_array[MAX_RECORD_NUM];  // [(xx,xx), (xx,xx)] to insert
 } Inserts;
 
 // struct of delete
@@ -93,8 +121,9 @@ typedef struct {
 // struct of update
 typedef struct {
   char *relation_name;            // Relation to update
-  char *attribute_name;           // Attribute to update
-  Value value;                    // update value
+  char *attribute_name[MAX_NUM];  // Attribute to update
+  Values values;                  // update value
+  size_t value_num;               // Number of columns to update
   size_t condition_num;           // Length of conditions in Where clause
   Condition conditions[MAX_NUM];  // conditions in Where clause
 } Updates;
@@ -136,7 +165,7 @@ typedef struct {
 } DescTable;
 
 typedef struct {
-  const char *relation_name;  
+  const char *relation_name;
 } ShowIndex;
 
 typedef struct {
@@ -195,9 +224,14 @@ extern "C" {
 void relation_attr_init(RelAttr *relation_attr, const char *relation_name, const char *attribute_name);
 void relation_attr_destroy(RelAttr *relation_attr);
 
+void aggrefunc_init(Aggrefunc *func, AggrefuncType type, const char *relation_num, const char *attribute_name, int num);
+void aggrefunc_destroy(Aggrefunc *func);
+
 void value_init_integer(Value *value, int v);
 void value_init_float(Value *value, float v);
 void value_init_string(Value *value, const char *v);
+int value_init_date(Value *value, const char *v);
+void value_init_select(Value *value, Query *query);
 void value_destroy(Value *value);
 
 void condition_init(Condition *condition, CompOp comp, int left_is_attr, RelAttr *left_attr, Value *left_value,
@@ -211,17 +245,19 @@ void selects_init(Selects *selects, ...);
 void selects_append_attribute(Selects *selects, RelAttr *rel_attr);
 void selects_append_relation(Selects *selects, const char *relation_name);
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num);
+void selects_append_aggrefuncs(Selects *selects, Aggrefunc *func);
 void selects_destroy(Selects *selects);
 
-void inserts_init(Inserts *inserts, const char *relation_name, Value values[], size_t value_num);
+void inserts_init(Inserts *inserts, const char *relation_name, Values values_array[], size_t value_num_array[], size_t values_num);
 void inserts_destroy(Inserts *inserts);
 
 void deletes_init_relation(Deletes *deletes, const char *relation_name);
 void deletes_set_conditions(Deletes *deletes, Condition conditions[], size_t condition_num);
 void deletes_destroy(Deletes *deletes);
 
-void updates_init(Updates *updates, const char *relation_name, const char *attribute_name, Value *value,
+void updates_init(Updates *updates, const char *relation_name, Value value[], size_t value_num,
     Condition conditions[], size_t condition_num);
+void updates_append_attribute(Updates *updates, const char *attr_name, size_t attr_num);
 void updates_destroy(Updates *updates);
 
 void create_table_append_attribute(CreateTable *create_table, AttrInfo *attr_info);

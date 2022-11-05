@@ -13,13 +13,12 @@ See the Mulan PSL v2 for more details. */
 //
 
 #include "sql/operator/index_scan_operator.h"
+#include "sql/expr/tuple.h"
 #include "storage/index/index.h"
 
-IndexScanOperator::IndexScanOperator(const Table *table, Index *index,
-		const TupleCell *left_cell, bool left_inclusive,
-		const TupleCell *right_cell, bool right_inclusive)
-  : table_(table), index_(index),
-    left_inclusive_(left_inclusive), right_inclusive_(right_inclusive)
+IndexScanOperator::IndexScanOperator(const Table *table, Index *index, const TupleCell *left_cell, bool left_inclusive,
+    const TupleCell *right_cell, bool right_inclusive)
+    : table_(table), index_(index), left_inclusive_(left_inclusive), right_inclusive_(right_inclusive)
 {
   if (left_cell) {
     left_cell_ = *left_cell;
@@ -28,16 +27,22 @@ IndexScanOperator::IndexScanOperator(const Table *table, Index *index,
     right_cell_ = *right_cell;
   }
 }
-
+int IndexScanOperator::tuplesNum()
+{
+  return sizeof(tuples_);
+}
 RC IndexScanOperator::open()
 {
   if (nullptr == table_ || nullptr == index_) {
     return RC::INTERNAL;
   }
 
-  
-  IndexScanner *index_scanner = index_->create_scanner(left_cell_.data(), left_cell_.length(), left_inclusive_,
-                                                       right_cell_.data(), right_cell_.length(), right_inclusive_);
+  IndexScanner *index_scanner = index_->create_scanner(left_cell_.data(),
+      left_cell_.length(),
+      left_inclusive_,
+      right_cell_.data(),
+      right_cell_.length(),
+      right_inclusive_);
   if (nullptr == index_scanner) {
     LOG_WARN("failed to create index scanner");
     return RC::INTERNAL;
@@ -52,7 +57,7 @@ RC IndexScanOperator::open()
   index_scanner_ = index_scanner;
 
   tuple_.set_schema(table_, table_->table_meta().field_metas());
-  
+
   return RC::SUCCESS;
 }
 
@@ -74,8 +79,9 @@ RC IndexScanOperator::close()
   return RC::SUCCESS;
 }
 
-Tuple * IndexScanOperator::current_tuple()
+Tuple **IndexScanOperator::current_tuple()
 {
   tuple_.set_record(&current_record_);
-  return &tuple_;
+  tuples_[0] = &tuple_;
+  return (Tuple **)tuples_;
 }

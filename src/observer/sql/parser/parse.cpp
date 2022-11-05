@@ -12,11 +12,14 @@ See the Mulan PSL v2 for more details. */
 // Created by Meiyi
 //
 
+#include <cstddef>
+#include <cstring>
 #include <iostream>
 #include <mutex>
 #include "sql/parser/parse.h"
 #include "rc.h"
 #include "common/log/log.h"
+#include "sql/parser/parse_defs.h"
 
 RC parse(char *st, Query *sqln);
 
@@ -39,6 +42,27 @@ void relation_attr_destroy(RelAttr *relation_attr)
   free(relation_attr->attribute_name);
   relation_attr->relation_name = nullptr;
   relation_attr->attribute_name = nullptr;
+}
+
+void aggrefunc_init(Aggrefunc *func, AggrefuncType type, const char *relation_num, const char *attribute_name, int num)
+{
+  func->type = type;
+  if (relation_num != nullptr) {
+    func->attribute.relation_name = strdup(relation_num);
+  } else {
+    func->attribute.relation_name = nullptr;
+  }
+  if (attribute_name != nullptr) {
+    func->attribute.attribute_name = strdup(attribute_name);
+  } else {
+    func->attribute.attribute_name = nullptr;
+  }
+  func->num = -1;
+  func->num = num;
+}
+void aggrefunc_destroy(Aggrefunc *func)
+{
+  relation_attr_destroy(&func->attribute);
 }
 
 void value_init_integer(Value *value, int v)
@@ -69,6 +93,11 @@ int value_init_date(Value *value, const char *v)
   value->data = malloc(sizeof(dv));  // TODO:check malloc failure
   memcpy(value->data, &dv, sizeof(dv));
   return 0;
+}
+void value_init_select(Value *value, Query *query)
+{
+  value->type = SELECTS;
+  value->data = query;
 }
 void value_init_float(Value *value, float v)
 {
@@ -151,6 +180,11 @@ void selects_append_conditions(Selects *selects, Condition conditions[], size_t 
   selects->condition_num = condition_num;
 }
 
+void selects_append_aggrefuncs(Selects *selects, Aggrefunc *func)
+{
+  selects->aggrefuncs[selects->aggrefunc_num++] = *func;
+}
+
 void selects_destroy(Selects *selects)
 {
   for (size_t i = 0; i < selects->attr_num; i++) {
@@ -168,6 +202,11 @@ void selects_destroy(Selects *selects)
     condition_destroy(&selects->conditions[i]);
   }
   selects->condition_num = 0;
+
+  for (size_t i = 0; i < selects->aggrefunc_num; i++) {
+    aggrefunc_destroy(&selects->aggrefuncs[i]);
+  }
+  selects->aggrefunc_num = 0;
 }
 void show_index_init(ShowIndex *show_index, const char *relation_name)
 {
@@ -179,25 +218,34 @@ void show_index_destroy(ShowIndex *show_index)
   free((char *)show_index->relation_name);
   show_index->relation_name = nullptr;
 }
-void inserts_init(Inserts *inserts, const char *relation_name, Value values[], size_t value_num)
+void inserts_init(Inserts *inserts, const char *relation_name, Values values_array[], size_t value_num_array[], size_t values_num)
 {
-  assert(value_num <= sizeof(inserts->values) / sizeof(inserts->values[0]));
+  for (size_t i = 0; i < values_num; i++) {
+    assert(value_num_array[i] <= sizeof(inserts->values_array[i]) / sizeof(inserts->values_array[i][0]));
+  }
 
   inserts->relation_name = strdup(relation_name);
-  for (size_t i = 0; i < value_num; i++) {
-    inserts->values[i] = values[i];
+  for (size_t i = 0; i < values_num; i++) {
+    for (size_t j = 0; j < value_num_array[i]; j++) {
+      inserts->values_array[i][j] = values_array[i][j];
+    }
+    inserts->value_nums[i] = value_num_array[i];
   }
-  inserts->value_num = value_num;
+  inserts->values_num = values_num;
 }
 void inserts_destroy(Inserts *inserts)
 {
   free(inserts->relation_name);
   inserts->relation_name = nullptr;
 
-  for (size_t i = 0; i < inserts->value_num; i++) {
-    value_destroy(&inserts->values[i]);
+  for (size_t i = 0; i < inserts->values_num; i++) {
+    for (size_t j = 0; j < inserts->value_nums[i]; j++) {
+      value_destroy(&inserts->values_array[i][j]);
+    }
+    inserts->value_nums[i] = 0;
   }
-  inserts->value_num = 0;
+
+  inserts->values_num = 0;
 }
 
 void deletes_init_relation(Deletes *deletes, const char *relation_name)
@@ -223,12 +271,16 @@ void deletes_destroy(Deletes *deletes)
   deletes->relation_name = nullptr;
 }
 
-void updates_init(Updates *updates, const char *relation_name, const char *attribute_name, Value *value,
+void updates_init(Updates *updates, const char *relation_name, Value value[], size_t value_num,
     Condition conditions[], size_t condition_num)
 {
   updates->relation_name = strdup(relation_name);
-  updates->attribute_name = strdup(attribute_name);
-  updates->value = *value;
+
+  assert(value_num <= sizeof(updates->values) / sizeof(updates->values[0]));
+  for (size_t i = 0; i < value_num; i++) {
+    updates->values[i] = value[i];
+  }
+  updates->value_num = value_num;
 
   assert(condition_num <= sizeof(updates->conditions) / sizeof(updates->conditions[0]));
   for (size_t i = 0; i < condition_num; i++) {
@@ -237,14 +289,24 @@ void updates_init(Updates *updates, const char *relation_name, const char *attri
   updates->condition_num = condition_num;
 }
 
+void updates_append_attribute(Updates *updates, const char *attr_name, size_t attr_num)
+{
+  updates->attribute_name[attr_num] = strdup(attr_name);
+}
+
 void updates_destroy(Updates *updates)
 {
   free(updates->relation_name);
-  free(updates->attribute_name);
-  updates->relation_name = nullptr;
-  updates->attribute_name = nullptr;
 
-  value_destroy(&updates->value);
+  for (size_t i = 0; i < updates->value_num; i++) {
+    free(updates->attribute_name[i]);
+    updates->attribute_name[i] = nullptr;
+  }
+  updates->relation_name = nullptr;
+
+  for (size_t i = 0; i < updates->value_num; i++) {
+    value_destroy(updates->values + i);
+  }
 
   for (size_t i = 0; i < updates->condition_num; i++) {
     condition_destroy(&updates->conditions[i]);
@@ -442,7 +504,6 @@ extern "C" int sql_parse(const char *st, Query *sqls);
 RC parse(const char *st, Query *sqln)
 {
   sql_parse(st, sqln);
-
   if (sqln->flag == SCF_ERROR)
     return SQL_SYNTAX;
   else

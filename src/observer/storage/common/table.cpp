@@ -30,6 +30,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/index/bplus_tree_index.h"
 #include "storage/trx/trx.h"
 #include "storage/clog/clog.h"
+std::map<std::string, int> table_n2id;
 
 Table::~Table()
 {
@@ -136,12 +137,16 @@ RC Table::drop(const char* dir)
       LOG_ERROR("Failed to remove meta file=%s, errno=%d", path.c_str(), errno);
       return RC::GENERIC_ERROR;
   }
+  // delete buffer pool from buffer pool manager
+  // assume one buffer pool is only used by one table, or buffer pool manager can't find buffer pool for another table
+  BufferPoolManager::instance().close_file(path.c_str());
 
   if(unlink(data_file.c_str()) != 0) { // 删除描述表元数据的文件
       LOG_ERROR("Failed to remove data file=%s, errno=%d", data_file.c_str(), errno);
       return RC::GENERIC_ERROR;
   }
-  
+  BufferPoolManager::instance().close_file(data_file.c_str());
+
   // 删除表实现text字段的数据文件（后续实现了text case时需要考虑，最开始可以不考虑这个逻辑）
   // std::string text_data_file = std::string(dir) + "/" + name() + TABLE_TEXT_DATA_SUFFIX;
   // if(unlink(text_data_file.c_str()) != 0) { 
@@ -151,13 +156,14 @@ RC Table::drop(const char* dir)
 
   const int index_num = table_meta_.index_num();
   for (int i = 0; i < index_num; i++) {  // 清理所有的索引相关文件数据与索引元数据
-      ((BplusTreeIndex*)indexes_[i])->close();
-      const IndexMeta* index_meta = table_meta_.index(i);
-      std::string index_file = table_index_file(dir, name(), index_meta->name());
-      if(unlink(index_file.c_str()) != 0) {
-          LOG_ERROR("Failed to remove index file=%s, errno=%d", index_file.c_str(), errno);
-          return RC::GENERIC_ERROR;
-      }
+    ((BplusTreeIndex *)indexes_[i])->close();
+    const IndexMeta *index_meta = table_meta_.index(i);
+    std::string index_file = table_index_file(dir, name(), index_meta->name());
+    if (unlink(index_file.c_str()) != 0) {
+      LOG_ERROR("Failed to remove index file=%s, errno=%d", index_file.c_str(), errno);
+      return RC::GENERIC_ERROR;
+    }
+    BufferPoolManager::instance().close_file(index_file.c_str());
   }
   return RC::SUCCESS;
 }
@@ -327,6 +333,97 @@ RC Table::insert_record(Trx *trx, Record *record)
   return rc;
 }
 
+RC Table::insert_records(Trx *trx, Record *records, size_t record_num)
+{
+  RC rc = RC::SUCCESS;
+  if (trx != nullptr) {
+    for (size_t i = 0; i < record_num; i++) {
+      trx->init_trx_info(this, records[i]);
+    }
+  }
+  for (size_t i = 0; i < record_num; i++) {
+    rc = record_handler_->insert_record(records[i].data(), table_meta_.record_size(), &records[i].rid());
+    if (rc != RC::SUCCESS) {
+      LOG_ERROR("Insert record failed. table name=%s, rc=%d:%s", table_meta_.name(), rc, strrc(rc));
+      RC rc2 = RC::SUCCESS;
+      for (size_t j = 0; j < i; j++) {
+        rc2 = record_handler_->delete_record(&records[i].rid());
+        if (rc2 != RC::SUCCESS) {
+          LOG_ERROR("Failed to rollback record data when insert record failed. table name=%s, rc=%d:%s",
+              name(),
+              rc2,
+              strrc(rc2));
+        }
+      }
+      return rc;
+    }
+  }
+
+  if (trx != nullptr) {
+    for (size_t i = 0; i < record_num; i++) {
+      rc = trx->insert_record(this, &records[i]);
+      if (rc != RC::SUCCESS) {
+        LOG_ERROR("Failed to log operation(insertion) to trx");
+
+        RC rc2 = RC::SUCCESS;
+        for (size_t j = 0; j < i; j++) {
+          rc2 = rollback_insert(trx, records[j].rid());
+          if (rc2 != RC::SUCCESS) {
+            LOG_ERROR(
+                "Failed to rollback record data when log operation(insertion) to trx failed. table name=%s, rc=%d:%s",
+                name(),
+                rc2,
+                strrc(rc2));
+          }
+        }
+        return rc;
+      }
+    }
+  }
+
+  for (size_t i = 0; i < record_num; i++) {
+    Record &record = records[i];
+    rc = insert_entry_of_indexes(record.data(), record.rid());
+    if (rc != RC::SUCCESS) {
+      for (size_t j = 0; j < i; j++) {
+        RC rc2 = delete_entry_of_indexes(record.data(), record.rid(), true);
+        if (rc2 != RC::SUCCESS) {
+          LOG_ERROR("Failed to rollback index data when insert index entries failed. table name=%s, rc=%d:%s",
+              name(),
+              rc2,
+              strrc(rc2));
+        }
+        rc2 = record_handler_->delete_record(&record.rid());
+        if (rc2 != RC::SUCCESS) {
+          LOG_PANIC("Failed to rollback record data when insert index entries failed. table name=%s, rc=%d:%s",
+              name(),
+              rc2,
+              strrc(rc2));
+        }
+        return rc;
+      }
+    }
+  }
+
+  if (trx != nullptr) {
+    // append clog record
+    CLogRecord *clog_record = nullptr;
+    for (size_t i = 0; i < record_num; i++) {
+      rc = clog_manager_->clog_gen_record(
+          CLogType::REDO_INSERT, trx->get_current_id(), clog_record, name(), table_meta_.record_size(), &records[i]);
+      if (rc != RC::SUCCESS) {
+        LOG_ERROR("Failed to create a clog record. rc=%d:%s", rc, strrc(rc));
+        return rc;
+      }
+      rc = clog_manager_->clog_append_record(clog_record);
+      if (rc != RC::SUCCESS) {
+        return rc;
+      }
+    }
+  }
+  return rc;
+}
+
 RC Table::recover_insert_record(Record *record)
 {
   RC rc = RC::SUCCESS;
@@ -358,6 +455,51 @@ RC Table::insert_record(Trx *trx, int value_num, const Value *values)
   record.set_data(record_data);
   rc = insert_record(trx, &record);
   delete[] record_data;
+  return rc;
+}
+
+RC Table::insert_record(Trx *trx, size_t values_num, const Values *values_array, const size_t *value_nums)
+{
+  if (values_num <= 0 || nullptr == values_array || nullptr == value_nums) {
+    LOG_ERROR("Invalid argument. table name: %s, values num=%d, values_array=%p, value_nums=%p",
+        name(),
+        values_num,
+        values_array,
+        value_nums);
+    return RC::INVALID_ARGUMENT;
+  }
+
+  for (size_t i = 0; i < values_num; i++) {
+    if (value_nums[i] <= 0) {
+      LOG_ERROR("Invalid argument. table name: %s, values num=%d, values_array=%p, value_nums=%p, %dth_value_num=",
+          name(),
+          values_num,
+          values_array,
+          value_nums,
+          i,
+          value_nums[i]);
+      return RC::INVALID_ARGUMENT;
+    }
+  }
+
+  char *record_datas[MAX_RECORD_NUM];
+  RC rc = RC::SUCCESS;
+  for (size_t i = 0; i < values_num; i++) {
+    rc = make_record(value_nums[i], values_array[i], record_datas[i]);
+    if (rc != RC::SUCCESS) {
+      LOG_ERROR("Failed to create a record. rc=%d:%s", rc, strrc(rc));
+      for (size_t j = 0; j < i; j++) {
+        delete[] record_datas[j];
+      }
+    }
+  }
+
+  Record records[MAX_RECORD_NUM];
+  for (size_t i = 0; i < values_num; i++) {
+    records[i].set_data(record_datas[i]);
+  }
+  rc = insert_records(trx, records, values_num);
+
   return rc;
 }
 

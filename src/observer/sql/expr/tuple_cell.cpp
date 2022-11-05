@@ -18,6 +18,33 @@ See the Mulan PSL v2 for more details. */
 #include "util/comparator.h"
 #include "util/util.h"
 
+RC TupleCell::get_value(Value *value)
+{
+  value->type = attr_type_;
+  switch (attr_type_) {
+    case INTS: {
+      value->data = malloc(sizeof(int));
+      memcpy(value->data, data_, sizeof(int));
+    } break;
+    case DATES: {
+      value->data = malloc(sizeof(int));
+      memcpy(value->data, data_, sizeof(int));
+    } break;
+    case FLOATS: {
+      value->data = malloc(sizeof(float));
+      memcpy(value->data, data_, sizeof(float));
+    } break;
+    case CHARS: {
+      value->data = strdup(data_);
+    } break;
+    default: {
+      LOG_WARN("unsupported attr type: %d", attr_type_);
+      return RC::UNIMPLENMENT;
+    }
+  }
+  return RC::SUCCESS;
+}
+
 void TupleCell::to_string(std::ostream &os) const
 {
   switch (attr_type_) {

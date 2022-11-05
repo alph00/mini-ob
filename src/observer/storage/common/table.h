@@ -16,6 +16,8 @@ See the Mulan PSL v2 for more details. */
 #define __OBSERVER_STORAGE_COMMON_TABLE_H__
 
 #include "storage/common/table_meta.h"
+#include <string>
+#include <map>
 
 struct RID;
 class Record;
@@ -47,9 +49,9 @@ public:
    */
   RC create(const char *path, const char *name, const char *base_dir, int attribute_count, const AttrInfo attributes[],
       CLogManager *clog_manager);
-  
+
   RC drop(const char *path);
-  RC show_index_info(std::string& result);
+  RC show_index_info(std::string &result);
   /**
    * 打开一个表
    * @param meta_file 保存表元数据的文件完整路径
@@ -59,6 +61,7 @@ public:
   RC open(const char *meta_file, const char *base_dir, CLogManager *clog_manager);
 
   RC insert_record(Trx *trx, int value_num, const Value *values);
+  RC insert_record(Trx *trx, size_t values_num, const Values *values_array, const size_t *value_nums);
   RC update_record(Trx *trx, const char *attribute_name, const Value *value, int condition_num,
       const Condition conditions[], int *updated_count);
   RC update_record(Trx *trx, Record *record);
@@ -99,6 +102,7 @@ private:
   IndexScanner *find_index_for_scan(const ConditionFilter *filter);
   IndexScanner *find_index_for_scan(const DefaultConditionFilter &filter);
   RC insert_record(Trx *trx, Record *record);
+  RC insert_records(Trx *trx, Record *records, size_t record_num);
 
 public:
   RC recover_insert_record(Record *record);
@@ -126,5 +130,5 @@ private:
   RecordFileHandler *record_handler_ = nullptr;  /// 记录操作
   std::vector<Index *> indexes_;
 };
-
+extern std::map<std::string, int> table_n2id;
 #endif  // __OBSERVER_STORAGE_COMMON_TABLE_H__
