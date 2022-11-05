@@ -15,7 +15,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 
-/* Token kinds.  */
+/* Token type.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
@@ -88,16 +88,20 @@ extern int yydebug;
     GE = 298,
     NE = 299,
     UNIQUE = 300,
-    NUMBER = 301,
-    FLOAT = 302,
-    DATE_STR = 303,
-    ID = 304,
-    PATH = 305,
-    SSS = 306,
-    STAR = 307,
-    STRING_V = 308
+    COUNT_F = 301,
+    AVG_F = 302,
+    MAX_F = 303,
+    MIN_F = 304,
+    SUM_F = 305,
+    NUMBER = 306,
+    FLOAT = 307,
+    DATE_STR = 308,
+    ID = 309,
+    PATH = 310,
+    SSS = 311,
+    STAR = 312,
+    STRING_V = 313
   };
-  typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */
@@ -105,7 +109,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 108 "yacc_sql.y" /* yacc.c:1909  */
+#line 120 "yacc_sql.y" /* yacc.c:1909  */
 
   struct _Attr *attr;
   struct _Condition *condition1;
@@ -115,7 +119,7 @@ union YYSTYPE
   float floats;
 	char *position;
 
-#line 118 "yacc_sql.tab.h" /* yacc.c:1909  */
+#line 123 "yacc_sql.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -125,8 +129,6 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-
 int yyparse (void *scanner);
-
 
 #endif /* !YY_YY_YACC_SQL_TAB_H_INCLUDED  */
