@@ -912,12 +912,13 @@ RC ExecuteStage::do_create_index(SQLStageEvent *sql_event)
   Db *db = session_event->session()->get_current_db();
   const CreateIndex &create_index = sql_event->query()->sstr.create_index;
   Table *table = db->find_table(create_index.relation_name);
+  Trx *current_trx = session_event->session()->current_trx();
   if (nullptr == table) {
     session_event->set_response("FAILURE\n");
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
 
-  RC rc = table->create_index(nullptr, create_index.index_name, create_index.attribute_name);
+  RC rc = table->create_index(current_trx, create_index.index_name, create_index.attribute_num, create_index.attribute_names, create_index.unique);
   sql_event->session_event()->set_response(rc == RC::SUCCESS ? "SUCCESS\n" : "FAILURE\n");
   return rc;
 }

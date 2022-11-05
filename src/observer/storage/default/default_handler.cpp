@@ -156,18 +156,18 @@ RC DefaultHandler::drop_table(const char *dbname, const char *relation_name)
   return RC::GENERIC_ERROR;
 }
 
-RC DefaultHandler::create_index(
-    Trx *trx, const char *dbname, const char *relation_name, const char *index_name, const char *attribute_name)
-{
+RC DefaultHandler::create_index(Trx *trx, const char *dbname, const char *relation_name, const char *index_name, const int attribute_num, char * const attribute_names[], int unique) {
   Table *table = find_table(dbname, relation_name);
+  if (attribute_num == 0) {
+    return RC::GENERIC_ERROR;
+  }
   if (nullptr == table) {
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
-  return table->create_index(trx, index_name, attribute_name);
+  return table->create_index(trx, index_name, attribute_num, attribute_names, unique);
 }
 
-RC DefaultHandler::drop_index(Trx *trx, const char *dbname, const char *relation_name, const char *index_name)
-{
+RC DefaultHandler::drop_index(Trx *trx, const char *dbname, const char *relation_name, const char *index_name) {
 
   return RC::GENERIC_ERROR;
 }
