@@ -430,7 +430,7 @@ select:				/*  select 语句的语法解析树*/
     ;
 
 select_stmt:
-    SELECT select_attr FROM ID rel_list join_lists where
+    SELECT select_attr FROM ID join_lists rel_list  where
 		{
 			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$4;
 			selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
@@ -624,7 +624,7 @@ attr_list:
 
 rel_list:
     /* empty */
-    | COMMA ID rel_list {	
+    | COMMA ID join_lists rel_list {	
 				selects_append_relation(&CONTEXT->ssql->sstr.selection, $2);
 		  }
     ;
