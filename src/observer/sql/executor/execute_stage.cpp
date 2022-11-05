@@ -775,6 +775,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event, std::vector<Value *> *value
     pred_oper.add_child(join_oper[select_stmt->tables().size() - 2]);
   } else {  // 单表
     scan_oper[0] = try_to_create_index_scan_operator(select_stmt->filter_stmt());
+    scan_oper[0] = nullptr;
     if (nullptr == scan_oper[0]) {
       scan_oper[0] = new TableScanOperator(select_stmt->tables()[0]);
     }

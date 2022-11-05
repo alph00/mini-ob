@@ -293,8 +293,8 @@ RC Table::insert_record(Trx *trx, Record *record)
       return rc;
     }
   }
-
-  rc = insert_entry_of_indexes(record->data(), record->rid());
+  //multi-index
+  //rc = insert_entry_of_indexes(record->data(), record->rid());
   if (rc != RC::SUCCESS) {
     RC rc2 = delete_entry_of_indexes(record->data(), record->rid(), true);
     if (rc2 != RC::SUCCESS) {
@@ -714,7 +714,9 @@ public:
 
   RC insert_index(const Record *record)
   {
-    return index_->insert_entry(record->data(), &record->rid());
+    //multi-index
+    //return index_->insert_entry(record->data(), &record->rid());
+    return RC::SUCCESS;
   }
 
 private:
@@ -909,8 +911,8 @@ RC Table::delete_record(Trx *trx, ConditionFilter *filter, int *deleted_count)
 RC Table::delete_record(Trx *trx, Record *record)
 {
   RC rc = RC::SUCCESS;
-
-  rc = delete_entry_of_indexes(record->data(), record->rid(), false);  // 重复代码 refer to commit_delete
+  //multi-index
+  //rc = delete_entry_of_indexes(record->data(), record->rid(), false);  // 重复代码 refer to commit_delete
   if (rc != RC::SUCCESS) {
     LOG_ERROR("Failed to delete indexes of record (rid=%d.%d). rc=%d:%s",
         record->rid().page_num,

@@ -119,6 +119,7 @@ ParserContext *get_context(yyscan_t scanner)
 		SUM_F
 		JOIN
 		INNER
+		UNIQUE
 
 %union {
   struct _Attr *attr;
