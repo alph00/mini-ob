@@ -293,8 +293,8 @@ RC Table::insert_record(Trx *trx, Record *record)
       return rc;
     }
   }
-
-  rc = insert_entry_of_indexes(record->data(), record->rid());
+  //multi-index
+  //rc = insert_entry_of_indexes(record->data(), record->rid());
   if (rc != RC::SUCCESS) {
     RC rc2 = delete_entry_of_indexes(record->data(), record->rid(), true);
     if (rc2 != RC::SUCCESS) {
@@ -714,7 +714,9 @@ public:
 
   RC insert_index(const Record *record)
   {
-    return index_->insert_entry(record->data(), &record->rid());
+    //multi-index
+    //return index_->insert_entry(record->data(), &record->rid());
+    return RC::SUCCESS;
   }
 
 private:
@@ -727,40 +729,45 @@ static RC insert_index_record_reader_adapter(Record *record, void *context)
   return inserter.insert_index(record);
 }
 
-RC Table::create_index(Trx *trx, const char *index_name, const char *attribute_name)
-{
-  if (common::is_blank(index_name) || common::is_blank(attribute_name)) {
-    LOG_INFO("Invalid input arguments, table name is %s, index_name is blank or attribute_name is blank", name());
+RC Table::create_index(Trx *trx, const char *index_name, const int attribute_num, char * const attribute_names[], int unique) {
+
+  //索引名或列名为空
+  if (index_name == nullptr || common::is_blank(index_name)) {
     return RC::INVALID_ARGUMENT;
   }
-  if (table_meta_.index(index_name) != nullptr || table_meta_.find_index_by_field((attribute_name))) {
-    LOG_INFO("Invalid input arguments, table name is %s, index %s exist or attribute %s exist index",
-        name(),
-        index_name,
-        attribute_name);
+  for (int i = 0; i < attribute_num; i++) {
+    if (attribute_names[i] == nullptr || common::is_blank(attribute_names[i])) {
+      return RC::INVALID_ARGUMENT;
+    }
+  }
+  //索引已存在
+  if (table_meta_.index(index_name) != nullptr || table_meta_.find_index_by_fields(attribute_num, attribute_names)) {
     return RC::SCHEMA_INDEX_EXIST;
   }
 
-  const FieldMeta *field_meta = table_meta_.field(attribute_name);
-  if (!field_meta) {
-    LOG_INFO("Invalid input arguments, there is no field of %s in table:%s.", attribute_name, name());
-    return RC::SCHEMA_FIELD_MISSING;
+
+  std::vector<const FieldMeta *> fields_metas;
+  for (int i = 0; i < attribute_num; i++) {
+    const FieldMeta *field_meta = table_meta_.field(attribute_names[i]);
+    if (!field_meta) {
+      return RC::SCHEMA_FIELD_MISSING;
+    }
+    fields_metas.push_back(field_meta);
   }
 
   IndexMeta new_index_meta;
-  RC rc = new_index_meta.init(index_name, *field_meta);
+  RC rc = new_index_meta.init(index_name, fields_metas);
   if (rc != RC::SUCCESS) {
-    LOG_INFO("Failed to init IndexMeta in table:%s, index_name:%s, field_name:%s", name(), index_name, attribute_name);
     return rc;
   }
 
   // 创建索引相关数据
-  BplusTreeIndex *index = new BplusTreeIndex();
+  BplusTreeIndex *index = new BplusTreeIndex(unique);
   std::string index_file = table_index_file(base_dir_.c_str(), name(), index_name);
-  rc = index->create(index_file.c_str(), new_index_meta, *field_meta);
+  rc = index->create(index_file.c_str(), new_index_meta, *(fields_metas[0])); // fake
   if (rc != RC::SUCCESS) {
     delete index;
-    LOG_ERROR("Failed to create bplus tree index. file name=%s, rc=%d:%s", index_file.c_str(), rc, strrc(rc));
+    LOG_ERROR("Failed to create bplus tree index. file name=%s, rc=%d:W%s", index_file.c_str(), rc, strrc(rc));
     return rc;
   }
 
@@ -816,25 +823,24 @@ RC Table::create_index(Trx *trx, const char *index_name, const char *attribute_n
 
   return rc;
 }
-RC Table::show_index_info(std::string &result)
-{
+
+RC Table::show_index_info(std::string& result){
   const int index_num = table_meta_.index_num();
-  for (int i = 0; i < index_num; i++) {
-    const IndexMeta *index_meta = table_meta_.index(i);
-    const char *field = index_meta->field();
-    const char *index_name = index_meta->name();
-    // const FieldMeta* field_meta = table_meta_.field(field);
-    // Table | Non_unique |Key_name | Seq_in_index |Column_name
-    result.append(table_meta_.name())
-        .append(" | ")
-        .append(index_num > 0 ? "1" : "0")
-        .append(" | ")
-        .append(index_name)
-        .append(" | ")  //.append(std::to_string(table_meta_.find_field_seq(field)))
-        .append("1")
-        .append(" | ")
-        .append(field)
-        .append("\n");
+  for (int i = 0; i < index_num; i++){
+    const IndexMeta* index_meta = table_meta_.index(i);
+    //const char* field=index_meta->field();
+    std::vector<std::string> fields=index_meta->fields();
+    const char* index_name=index_meta->name();
+    //const FieldMeta* field_meta = table_meta_.field(field);
+    //Table | Non_unique |Key_name | Seq_in_index |Column_name
+    for(int i=fields.size()-1;i>=0;i--){
+      result.append(table_meta_.name()).append(" | ").append(index_num>0?"1":"0")\
+      .append(" | ").append(index_name).append(" | ")\
+      //.append(std::to_string(table_meta_.find_field_seq(field)))
+      .append(std::to_string(fields.size()-i))\
+      .append(" | ").append(fields[i]).append("\n");
+    }
+    
   }
   return RC::SUCCESS;
 }
@@ -905,8 +911,8 @@ RC Table::delete_record(Trx *trx, ConditionFilter *filter, int *deleted_count)
 RC Table::delete_record(Trx *trx, Record *record)
 {
   RC rc = RC::SUCCESS;
-
-  rc = delete_entry_of_indexes(record->data(), record->rid(), false);  // 重复代码 refer to commit_delete
+  //multi-index
+  //rc = delete_entry_of_indexes(record->data(), record->rid(), false);  // 重复代码 refer to commit_delete
   if (rc != RC::SUCCESS) {
     LOG_ERROR("Failed to delete indexes of record (rid=%d.%d). rc=%d:%s",
         record->rid().page_num,
